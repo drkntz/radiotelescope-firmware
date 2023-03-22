@@ -20,8 +20,11 @@
 #include "mcc_generated_files/system.h"
 #include "mcc_generated_files/pin_manager.h"
 #include "mcc_generated_files/tmr1.h"
+#include "mcc_generated_files/uart1.h"
+#include "mcc_generated_files/uart2.h"
 
 // TODO: put program constants here
+#define ESC 27 // this is the escape key in ascii
 char get_char_wait_tag(void);
 
 #endif	// COMMON_H

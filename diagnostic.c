@@ -7,6 +7,7 @@
 */
 #include "diagnostic.h"
 #include "common.h"
+#include "mcc_generated_files/adc1.h"
 
 #define DELAY 500
 // flip digital pins for now
@@ -44,4 +45,18 @@ void diagnostic_main(void)
     EL_CONTROL2_SetLow(); 
     printf("\r\nEL Control 2 low");
     get_char_wait_tag();
+    
+    printf("\r\nel current:\r\n");
+    
+    uint16_t adc_result = 0;
+    ADC1_Enable();
+    
+    while(1)
+    {
+        adc_result = ADC1_ConversionResultGet( EL_CURRENT);
+        printf("%u\r", adc_result);
+        
+        if(get_char_wait_tag() == ESC )
+            return;
+    }
 }
