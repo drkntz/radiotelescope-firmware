@@ -22,6 +22,7 @@
 #include "mcc_generated_files/tmr1.h"
 
 // TODO: put program constants here
+char get_char_wait_tag(void);
 
 #endif	// COMMON_H
 

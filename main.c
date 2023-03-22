@@ -13,6 +13,8 @@
 #include <xc.h>
 #include "common.h"
 #include "mcc_generated_files/uart2.h"
+#include "diagnostic.h"
+#include "mcc_generated_files/uart1.h"
 
 int main(void)
 {
@@ -24,11 +26,16 @@ int main(void)
     printf("\r\nWelcome to the Radio Telescope Control system \r\n");
     print_uartx = PRINT_BOTH; // for now, both UARTs will work over printf
     
+    diagnostic_main(); // check pins
+    
+    char test = 0;
+    
     while (1)
     {           
         //TMR1_Tasks_16BitOperation();
+
         
-        printf("running");
+        printf("\r\n test = %c", test);
         nSTAT_LED_Toggle();
         ClrWdt();
         __delay_ms(500);
