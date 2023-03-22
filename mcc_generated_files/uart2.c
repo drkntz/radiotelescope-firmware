@@ -47,10 +47,16 @@
 */
 #include <xc.h>
 #include "uart2.h"
+#include "uart1.h"
+
+
+
+uint8_t print_uartx; // which one to print to 
 
 /**
   Section: UART2 APIs
 */
+
 
 void UART2_Initialize(void)
 {
@@ -116,7 +122,20 @@ int __attribute__((__section__(".libc.write"))) write(int handle, void *buffer, 
 
     for (i = len; i; --i)
     {
-        UART2_Write(*(char*)buffer++);
+        switch(print_uartx)
+        {
+            case PRINT_USB: // UART1, USB connection
+                UART1_Write(*(char*)buffer++);
+                break;
+                
+            case PRINT_BOTH: // print both of them
+                UART1_Write(*(char*)buffer);
+                
+            case PRINT_TAG:
+            default: // debug, UART2
+                UART2_Write(*(char*)buffer++);
+                break;
+        } 
     }
     return(len);
 }

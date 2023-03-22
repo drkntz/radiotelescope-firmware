@@ -1,68 +1,39 @@
-/**
-  Generated main.c file from MPLAB Code Configurator
-
-  @Company
-    Microchip Technology Inc.
-
-  @File Name
-    main.c
-
-  @Summary
-    This is the generated main.c using PIC24 / dsPIC33 / PIC32MM MCUs.
-
-  @Description
-    This source file provides main entry point for system initialization and application code development.
-    Generation Information :
-        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.171.1
-        Device            :  PIC24FV32KA304
-    The generated drivers are tested against the following:
-        Compiler          :  XC16 v1.70
-        MPLAB 	          :  MPLAB X v5.50
+/* main.c
+ * Main file for radio-telescope control system project
+ * Authors: Zach Martin, Aaron Olsen, Loc pham
+ * Date: 3/9/2023
+ * 
+ * TODO: 
+ *  * Setup TMR1 as default time base & setup interval checks
+ *  * printf over both usb and debug. select which
+ *  * diagnostics via diags button and some kind of passcode ('q' 3 times over usb?)
 */
 
-/*
-    (c) 2020 Microchip Technology Inc. and its subsidiaries. You may use this
-    software and any derivatives exclusively with Microchip products.
 
-    THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
-    EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED
-    WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A
-    PARTICULAR PURPOSE, OR ITS INTERACTION WITH MICROCHIP PRODUCTS, COMBINATION
-    WITH ANY OTHER PRODUCTS, OR USE IN ANY APPLICATION.
+#include <xc.h>
+#include "common.h"
+#include "mcc_generated_files/uart2.h"
 
-    IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
-    INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND
-    WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS
-    BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE
-    FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN
-    ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY,
-    THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
-
-    MICROCHIP PROVIDES THIS SOFTWARE CONDITIONALLY UPON YOUR ACCEPTANCE OF THESE
-    TERMS.
-*/
-
-/**
-  Section: Included Files
-*/
-#include "mcc_generated_files/system.h"
-
-/*
-                         Main application
- */
 int main(void)
 {
     // initialize the device
     SYSTEM_Initialize();
-
+    nSTAT_LED_SetDigitalOutput(); // i think this is already done in mcc? TODO
+    
+    print_uartx = PRINT_TAG;
+    printf("\r\nWelcome to the Radio Telescope Control system \r\n");
+    print_uartx = PRINT_BOTH; // for now, both UARTs will work over printf
+    
     while (1)
     {           
-        // Add your application code
+        //TMR1_Tasks_16BitOperation();
+        
+        printf("running");
+        nSTAT_LED_Toggle();
+        ClrWdt();
+        __delay_ms(500);
     }
 
     return 1;
 }
-/**
- End of File
-*/
 

@@ -58,6 +58,14 @@
 
 #endif
 
+enum {
+    PRINT_TAG, // uart2
+    PRINT_USB, // uart1
+    PRINT_BOTH
+};
+
+extern uint8_t print_uartx; // which one to print to 
+
 /**
   Section: UART2 APIs
 */
