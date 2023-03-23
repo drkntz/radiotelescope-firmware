@@ -14,3 +14,11 @@ char get_char_wait_tag(void)
     
     return UART2_Read();
 }
+
+// do not wait, get char if available
+char get_char_tag(void)
+{
+    if(UART2_IsRxReady())
+        return UART2_Read();    
+    return -1; // TODO: i think this is what to return. EOF?
+}

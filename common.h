@@ -26,6 +26,7 @@
 // TODO: put program constants here
 #define ESC 27 // this is the escape key in ascii
 char get_char_wait_tag(void);
+char get_char_tag(void);
 
 #endif	// COMMON_H
 
