@@ -34,8 +34,8 @@ int main(void)
     {           
         //TMR1_Tasks_16BitOperation();
 
-        
-        printf("\r\n test = %c", test);
+        test = get_char_tag();
+        if(test != -1) printf("\r\n test = %c", test);
         nSTAT_LED_Toggle();
         ClrWdt();
         __delay_ms(500);

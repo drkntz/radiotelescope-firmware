@@ -10,62 +10,17 @@
 #include "mcc_generated_files/adc1.h"
 
 #define DELAY 500
+
+void adc_test(void); // test ADC inputs
+
 // flip digital pins for now
 void diagnostic_main(void)
 {
-    printf("\r\nDiagnostic menu. Hit any key to cycle through pin testing");
+    printf("\r\nDiagnostic menu. Hit any key to continue");
     get_char_wait_tag();
     
-    printf("\r\nel current:\r\n");
-    
-    uint16_t adc_result = 0;
-    uint16_t i;
-    uint8_t x;
-    ADC1_Initialize();
-    ADC1_InterruptDisable();
-    ADC1_InterruptFlagClear();
-    ADC1_Enable();
-    
+    adc_test();
 
-    while(1)
-    {
-        int conversion,i=0;
-        ADC1_Initialize();
-
-        ADC1_Enable();
-        ADC1_ChannelSelect(EL_CURRENT);
-        ADC1_SoftwareTriggerEnable();
-        //Provide Delay
-        for(i=0;i <1000;i++)
-        {
-        }
-        ADC1_SoftwareTriggerDisable();
-        while(!ADC1_IsConversionComplete(EL_CURRENT));
-        conversion = ADC1_ConversionResultGet(EL_CURRENT);
-        printf("\r\n%u", conversion);
-        ADC1_Disable(); 
-        ClrWdt();
-        __delay_ms(100);
-    }
-    while(0)
-    {
-        ADC1_SoftwareTriggerEnable();
-        //Provide Delay
-        for(i=0;i <1000;i++)
-        {
-        }
-        ADC1_SoftwareTriggerDisable();
-        while(!ADC1_IsConversionComplete(EL_CURRENT));
-        adc_result = ADC1_ConversionResultGet(EL_CURRENT);
-        
-        printf("%u %d\r", adc_result, x++);
-        ClrWdt();
-        __delay_ms(250);
-        
-        if(get_char_tag() == ESC )
-            return;
-    }
-    ADC1_Disable(); 
     
     AZ_CONTROL1_SetHigh(); 
     printf("\r\nAZ Control1 high");
@@ -98,4 +53,84 @@ void diagnostic_main(void)
     get_char_wait_tag();
     
 
+}
+
+void adc_test(void)
+{
+    uint16_t el, az;
+    char input_char = -1;
+    uint8_t i = 0; // this just shows that something is happening
+    uint8_t j;
+    
+    printf("\r\nADC Conversion test function. Press ESC to exit");
+    printf("\r\nElevation      Azimuth    index\r\n");
+    
+
+    ADC1_Initialize();
+//    ADC1_InterruptDisable();
+//    ADC1_InterruptFlagClear();
+//    ADC1_Enable();
+//    
+
+    while(input_char != ESC)
+    {
+        input_char = get_char_tag();
+        
+        el = ADC1_read(EL_CURRENT)/10;
+        
+//        // take the mean of 10 samples
+//        for(j = 0; j < 10; j++)
+//        {
+//            el += ADC1_read(EL_CURRENT);
+//        }
+//        el = el/10;
+//        
+//        //az = ADC1_read(AZ_CURRENT);
+//        printf("\r%u       %u     %u", el, az, i++);
+        UART2_Write((uint8_t)el);
+        //__delay_ms(100);
+        ClrWdt();
+    }
+        
+        
+//        
+//        int conversion,i=0;
+//        ADC1_Initialize();
+//
+//        ADC1_Enable();
+//        ADC1_ChannelSelect(EL_CURRENT);
+//        ADC1_SoftwareTriggerEnable();
+//        //Provide Delay
+//        for(i=0;i <1000;i++)
+//        {
+//        }
+//        ADC1_SoftwareTriggerDisable();
+//        while(!ADC1_IsConversionComplete(EL_CURRENT));
+//        conversion = ADC1_ConversionResultGet(EL_CURRENT);
+//        printf("\r\n%u", conversion);
+//        ADC1_Disable(); 
+//        ClrWdt();
+//        __delay_ms(100);
+//    }
+//    
+//    
+//        while(0)
+//    {
+//        ADC1_SoftwareTriggerEnable();
+//        //Provide Delay
+//        for(i=0;i <1000;i++)
+//        {
+//        }
+//        ADC1_SoftwareTriggerDisable();
+//        while(!ADC1_IsConversionComplete(EL_CURRENT));
+//        adc_result = ADC1_ConversionResultGet(EL_CURRENT);
+//        
+//        printf("%u %d\r", adc_result, x++);
+//        ClrWdt();
+//        __delay_ms(250);
+//        
+//        if(get_char_tag() == ESC )
+//            return;
+//    }
+//    ADC1_Disable(); 
 }

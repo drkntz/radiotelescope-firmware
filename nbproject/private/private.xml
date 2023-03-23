@@ -3,16 +3,23 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/system.h</file>
             <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/tmr1.h</file>
             <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/main.c</file>
-            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/clock.h</file>
             <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/pin_manager.h</file>
             <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/mcc.h</file>
+            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/pin_manager.c</file>
+            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/uart2.h</file>
+            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/adc1.h</file>
+            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/system.h</file>
+            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/clock.h</file>
+            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/adc1.c</file>
+            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/diagnostic.c</file>
             <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/common.h</file>
             <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/system.c</file>
-            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/pin_manager.c</file>
-            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/tmr1.c</file>
+            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/diagnostic.h</file>
+            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/uart1.c</file>
+            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/mcc_generated_files/uart2.c</file>
+            <file>file:/S:/projects/radiotelescope/radiotelescope-firmware/common.c</file>
         </group>
     </open-files>
 </project-private>
