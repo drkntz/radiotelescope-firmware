@@ -13,12 +13,15 @@
 
 void adc_test(void); // test ADC inputs
 void digital_inputs(void); // digital inputs
+void hbridge_test(void); // test hbridge
 
 // flip digital pins for now
 void diagnostic_main(void)
 {
     printf("\r\nDiagnostic menu. Hit any key to continue");
     get_char_wait_tag();
+    
+    hbridge_test();
     
     //adc_test();
     digital_inputs();
@@ -148,4 +151,92 @@ void digital_inputs(void)
         ClrWdt();
         __delay_ms(200);
     }
+}
+
+void hbridge_test(void)
+{
+    char input = -1;
+    
+    AZ_CONTROL1_SetLow();
+    AZ_CONTROL2_SetLow();
+    EL_CONTROL1_SetLow();
+    EL_CONTROL2_SetLow();
+    AZ_ENCODER1_SetDigitalInput();
+    
+    printf("\r\nHbridge test");
+    printf("\r\n--H Bridge------|--Encoders------");
+    printf("\r\nAZ1 AZ2 EL1 EL2 | AZ1 AZ2 EL1 EL2\r\n");
+
+    while(input != ESC)
+    {
+        printf("\r%x   %x   %x   %x     %x   %x   %x   %x", 
+            AZ_CONTROL1_GetValue(), AZ_CONTROL2_GetValue(), EL_CONTROL1_GetValue(), 
+            EL_CONTROL2_GetValue(), AZ_ENCODER1_GetValue(), AZ_ENCODER2_GetValue(), 
+            EL_ENCODER1_GetValue(), EL_ENCODER2_GetValue());
+        
+        input = get_char_tag();
+        
+        switch(input)
+        {
+            case -1: // default for no input
+                break;
+                
+            case '1': // toggle azimuth
+                if(AZ_CONTROL1_GetValue() == 1) 
+                {
+                    AZ_CONTROL1_SetLow();
+                    __delay_ms(250); // todo
+                    AZ_CONTROL2_SetHigh();
+                    __delay_ms(100); // todo
+                }
+                else if(AZ_CONTROL2_GetValue() == 1)
+                {
+                    AZ_CONTROL2_SetLow();
+                    __delay_ms(250); // todo
+                    AZ_CONTROL1_SetHigh();
+                    __delay_ms(100); // todo
+                }
+                else
+                {
+                    AZ_CONTROL1_SetHigh(); // TODO
+                    __delay_ms(100);
+                }
+                break;
+
+            case '2': // toggle elevation
+                if(EL_CONTROL1_GetValue() == 1) 
+                {
+                    EL_CONTROL1_SetLow();
+                    __delay_ms(250); // todo
+                    EL_CONTROL2_SetHigh();
+                    __delay_ms(100); // todo
+                }
+                else if(EL_CONTROL2_GetValue() == 1)
+                {
+                    EL_CONTROL2_SetLow();
+                    __delay_ms(250); // todo
+                    EL_CONTROL1_SetHigh();
+                    __delay_ms(100); // todo
+                }
+                else
+                {
+                    EL_CONTROL1_SetHigh(); // TODO
+                    __delay_ms(100);
+                }
+                break;
+                
+            default:
+                AZ_CONTROL1_SetLow();
+                AZ_CONTROL2_SetLow();
+                EL_CONTROL1_SetLow();
+                EL_CONTROL2_SetLow();
+                break;
+        }
+        ClrWdt();
+    }
+    
+    AZ_CONTROL1_SetLow();
+    AZ_CONTROL2_SetLow();
+    EL_CONTROL1_SetLow();
+    EL_CONTROL2_SetLow();
 }

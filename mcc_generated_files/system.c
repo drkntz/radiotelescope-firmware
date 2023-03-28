@@ -54,7 +54,7 @@
 
 // FOSCSEL
 #pragma config FNOSC = FRCPLL    //Oscillator Select->Fast RC Oscillator with Postscaler and PLL Module (FRCDIV+PLL)
-#pragma config SOSCSRC = ANA    //SOSC Source Type->Analog Mode for use with crystal
+#pragma config SOSCSRC = 0      //SOSC Source Type->Do not use crystal oscillator, just use GPIO
 #pragma config LPRCSEL = HP    //LPRC Oscillator Power and Accuracy->High Power, High Accuracy Mode
 #pragma config IESO = ON    //Internal External Switch Over bit->Internal External Switchover mode enabled (Two-speed Start-up enabled)
 
