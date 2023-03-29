@@ -109,6 +109,12 @@ void SYSTEM_Initialize(void)
     UART1_Initialize();
     ADC1_Initialize();
     TMR1_Initialize();
+    
+    // Make sure everything is off
+    AZ_CONTROL1_SetLow();
+    AZ_CONTROL2_SetLow();
+    EL_CONTROL1_SetLow();
+    EL_CONTROL2_SetLow();
 }
 
 /**

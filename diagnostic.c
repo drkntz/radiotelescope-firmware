@@ -5,171 +5,136 @@
  * 
  * 
 */
+
 #include "diagnostic.h"
 #include "common.h"
 #include "mcc_generated_files/adc1.h"
 
-#define DELAY 500
-
-void adc_test(void); // test ADC inputs
-void digital_inputs(void); // digital inputs
+/* Function prototypes: test various i/o */
+void adc_test(void);     // test ADC inputs
+void gpio_test(void);    // test inputs & outputs, 
 void hbridge_test(void); // test hbridge
+void hbridge_square_wave(void); // test hbridge
 
-// flip digital pins for now
+//void uart_test(void); // TODO
+//void lcd_test(void); // TODO
+
+
+
+// Top level menu
 void diagnostic_main(void)
 {
-    printf("\r\nDiagnostic menu. Hit any key to continue");
-    get_char_wait_tag();
+    char input;
     
-    hbridge_test();
-    
-    //adc_test();
-    digital_inputs();
+    while(1)
+    {
+        printf("\r\nDiagnostic menu.\r\nOptions:");
+        printf( "\r\n1 - ADC test"
+                "\r\n2 - GPIO test"
+                "\r\n3 - H-Bridge test"
+                "\r\nESC to exit and return to previous menu"
+                "\r\nEnter option: ");
 
-    
-    AZ_CONTROL1_SetHigh(); 
-    printf("\r\nAZ Control1 high");
-    get_char_wait_tag();
+        input = get_char_wait_tag();
 
-    AZ_CONTROL1_SetLow(); 
-    printf("\r\nAZ Control1 low");
-    get_char_wait_tag();
-    
-    AZ_CONTROL2_SetHigh(); 
-    printf("\r\nAZ Control 2 high");
-    get_char_wait_tag();
-    
-    AZ_CONTROL2_SetLow(); 
-    printf("\r\nAZ Control 2 low");
-    get_char_wait_tag();
-    
-    EL_CONTROL1_SetHigh(); 
-    printf("\r\nEL Control1 high");
-    get_char_wait_tag();
-    EL_CONTROL1_SetLow(); 
-    printf("\r\nEL Control1 low");
-    get_char_wait_tag();
-    
-    EL_CONTROL2_SetHigh(); 
-    printf("\r\nEL Control 2 high");
-    get_char_wait_tag();
-    EL_CONTROL2_SetLow(); 
-    printf("\r\nEL Control 2 low");
-    get_char_wait_tag();
-    
+        printf("%c\r\n", input);
 
+        switch(input)
+        {
+            case '1':
+                adc_test();
+                break;
+            case '2':
+                gpio_test();
+                break;
+            case '3':
+                hbridge_test();
+                break;
+            case ESC:
+                return; // go back to main
+        }
+    }
 }
 
+/* Test ADC inputs */
 void adc_test(void)
 {
     uint16_t el, az;
-    char input_char = -1;
-    uint8_t i = 0; // this just shows that something is happening
-    uint8_t j;
+    char input = -1;
     
-    printf("\r\nADC Conversion test function. Press ESC to exit");
-    printf("\r\nElevation      Azimuth    index\r\n");
+    printf("\r\nADC test");
+    printf("\r\nElevation      Azimuth\r\n");
     
-
-    ADC1_Initialize();
-//    ADC1_InterruptDisable();
-//    ADC1_InterruptFlagClear();
-//    ADC1_Enable();
-//    
-
-    while(input_char != ESC)
+    while(input != ESC)
     {
-        input_char = get_char_tag();
-        
-        // take the mean of 10 samples
-        for(j = 0; j < 10; j++)
-        {
-            el += ADC1_read(EL_CURRENT);
-            __delay_ms(1);
-        }
-        el = el/10;
-        
-        //az = ADC1_read(AZ_CURRENT);
-        printf("\r%u       %u     %u", el, az, i++);
-
+        input = get_char_tag();
+        el = ADC1_read(EL_CURRENT);
+        az = ADC1_read(AZ_CURRENT);
+        printf("\r%04u       %04u", el, az);
         __delay_ms(100);
         ClrWdt();
     }
-        
-        
-//        
-//        int conversion,i=0;
-//        ADC1_Initialize();
-//
-//        ADC1_Enable();
-//        ADC1_ChannelSelect(EL_CURRENT);
-//        ADC1_SoftwareTriggerEnable();
-//        //Provide Delay
-//        for(i=0;i <1000;i++)
-//        {
-//        }
-//        ADC1_SoftwareTriggerDisable();
-//        while(!ADC1_IsConversionComplete(EL_CURRENT));
-//        conversion = ADC1_ConversionResultGet(EL_CURRENT);
-//        printf("\r\n%u", conversion);
-//        ADC1_Disable(); 
-//        ClrWdt();
-//        __delay_ms(100);
-//    }
-//    
-//    
-//        while(0)
-//    {
-//        ADC1_SoftwareTriggerEnable();
-//        //Provide Delay
-//        for(i=0;i <1000;i++)
-//        {
-//        }
-//        ADC1_SoftwareTriggerDisable();
-//        while(!ADC1_IsConversionComplete(EL_CURRENT));
-//        adc_result = ADC1_ConversionResultGet(EL_CURRENT);
-//        
-//        printf("%u %d\r", adc_result, x++);
-//        ClrWdt();
-//        __delay_ms(250);
-//        
-//        if(get_char_tag() == ESC )
-//            return;
-//    }
-//    ADC1_Disable(); 
 }
 
-void digital_inputs(void)
+void gpio_test(void)
 {
-    printf("\r\nDigital Inputs");
-    printf("\r\nAz1 Az2 El1 El2\r\n");
-    AZ_ENCODER1_SetDigitalInput();
+    char input;
     
-    while(get_char_tag() != ESC)
+    printf("\r\nGpio Test"
+            "\r\n1- toggle STAT LED"
+            "\r\n2- toggle EXT LED");
+    
+    printf("\r\nLED output |Encoder input    | Other input");
+    printf("\r\nSTAT EXT   | AZ1 AZ2 EL1 EL2 | Btn1 Btn2 Btn3 diag\r\n");
+    
+    do
     {
-        printf("\r %x %x %x %x", AZ_ENCODER1_GetValue(), AZ_ENCODER2_GetValue(), EL_ENCODER1_GetValue(), EL_ENCODER2_GetValue());
+        input = get_char_tag();
+        
+        switch(input)
+        {
+            case '1':
+                nSTAT_LED_Toggle();
+                break;
+            case '2':
+                EXT_LED_Toggle();
+                break;
+            default:
+                break;
+        }
+        
+        printf("\r%x  %x  | %x %x %x %x | %x %x %x %x", 
+                ~nSTAT_LED_GetValue(), EXT_LED_GetValue(), AZ_ENCODER1_GetValue(),
+                AZ_ENCODER2_GetValue(), EL_ENCODER1_GetValue(), EL_ENCODER2_GetValue(), 
+                BUTTON1_GetValue(), BUTTON2_GetValue(), BUTTON3_GetValue(), DIAGS_GetValue());
+        
         ClrWdt();
-        __delay_ms(200);
-    }
+        __delay_ms(100);
+    }while(input != ESC);
 }
 
 void hbridge_test(void)
 {
-    char input = -1;
+    char input;
     
+    // double check everything is off
     AZ_CONTROL1_SetLow();
     AZ_CONTROL2_SetLow();
     EL_CONTROL1_SetLow();
     EL_CONTROL2_SetLow();
-    AZ_ENCODER1_SetDigitalInput();
     
-    printf("\r\nHbridge test");
-    printf("\r\n--H Bridge------|--Encoders------");
-    printf("\r\nAZ1 AZ2 EL1 EL2 | AZ1 AZ2 EL1 EL2\r\n");
+    printf("\r\nHbridge test"
+            "\r\n1- Toggle Azimuth"
+            "\r\n2- Toggle Elevation"
+            "\r\n3- El Control 1 Square wave"
+            "\r\nAny key - stop motor"
+            "\r\nESC - exit to previous menu");
+    printf("\r\n--H Bridge------|--Encoders------|----Current----");
+    printf("\r\nAZ1 AZ2 EL1 EL2 | AZ1 AZ2 EL1 EL2|  AZ    EL\r\n");
 
-    while(input != ESC)
+    do
     {
-        printf("\r%x   %x   %x   %x     %x   %x   %x   %x", 
+        printf("\r%x   %x   %x   %x     %x   %x   %x   %x     ", 
             AZ_CONTROL1_GetValue(), AZ_CONTROL2_GetValue(), EL_CONTROL1_GetValue(), 
             EL_CONTROL2_GetValue(), AZ_ENCODER1_GetValue(), AZ_ENCODER2_GetValue(), 
             EL_ENCODER1_GetValue(), EL_ENCODER2_GetValue());
@@ -185,14 +150,14 @@ void hbridge_test(void)
                 if(AZ_CONTROL1_GetValue() == 1) 
                 {
                     AZ_CONTROL1_SetLow();
-                    __delay_ms(250); // todo
+                    __delay_ms(100); // todo
                     AZ_CONTROL2_SetHigh();
                     __delay_ms(100); // todo
                 }
                 else if(AZ_CONTROL2_GetValue() == 1)
                 {
                     AZ_CONTROL2_SetLow();
-                    __delay_ms(250); // todo
+                    __delay_ms(100); // todo
                     AZ_CONTROL1_SetHigh();
                     __delay_ms(100); // todo
                 }
@@ -225,7 +190,11 @@ void hbridge_test(void)
                 }
                 break;
                 
-            default:
+            case '3':
+                hbridge_square_wave();
+                break;
+                
+            default: // any key kills motors
                 AZ_CONTROL1_SetLow();
                 AZ_CONTROL2_SetLow();
                 EL_CONTROL1_SetLow();
@@ -233,8 +202,31 @@ void hbridge_test(void)
                 break;
         }
         ClrWdt();
-    }
+    }while(input != ESC);
     
+    // make sure its all off
+    AZ_CONTROL1_SetLow();
+    AZ_CONTROL2_SetLow();
+    EL_CONTROL1_SetLow();
+    EL_CONTROL2_SetLow();
+}
+
+void hbridge_square_wave(void) // test hbridge
+{
+    AZ_CONTROL1_SetLow();
+    AZ_CONTROL2_SetLow();
+    EL_CONTROL1_SetLow();
+    EL_CONTROL2_SetLow();
+    printf("\r\n10Hz Square wave to Elevation 1");
+    
+    while(get_char_tag() == -1)
+    {
+        EL_CONTROL1_SetHigh();
+        __delay_ms(50); // todo
+        EL_CONTROL1_SetLow();
+        __delay_ms(50); // todo
+        ClrWdt();
+    }
     AZ_CONTROL1_SetLow();
     AZ_CONTROL2_SetLow();
     EL_CONTROL1_SetLow();
