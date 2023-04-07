@@ -9,12 +9,17 @@
 #include "diagnostic.h"
 #include "common.h"
 #include "mcc_generated_files/adc1.h"
+#include <stdbool.h>
 
 /* Function prototypes: test various i/o */
 void adc_test(void);     // test ADC inputs
 void gpio_test(void);    // test inputs & outputs, 
 void hbridge_test(void); // test hbridge
 void hbridge_square_wave(void); // test hbridge
+void encoder_test(void); // test rotary encoders
+
+// helper for encoder_test()
+void _encoder_test_callback(void);
 
 //void uart_test(void); // TODO
 //void lcd_test(void); // TODO
@@ -32,6 +37,7 @@ void diagnostic_main(void)
         printf( "\r\n1 - ADC test"
                 "\r\n2 - GPIO test"
                 "\r\n3 - H-Bridge test"
+                "\r\n4 - Read encoder interrupts"
                 "\r\nESC to exit and return to previous menu"
                 "\r\nEnter option: ");
 
@@ -49,6 +55,9 @@ void diagnostic_main(void)
                 break;
             case '3':
                 hbridge_test();
+                break;
+            case '4':
+                encoder_test();
                 break;
             case ESC:
                 return; // go back to main
@@ -103,8 +112,8 @@ void gpio_test(void)
                 break;
         }
         
-        printf("\r%x  %x  | %x %x %x %x | %x %x %x %x", 
-                ~nSTAT_LED_GetValue(), EXT_LED_GetValue(), AZ_ENCODER1_GetValue(),
+        printf("\r %x    %x    |  %x   %x   %x   %x  |   %x   %x   %x     %x", 
+                (0x01 & ~nSTAT_LED_GetValue()), EXT_LED_GetValue(), AZ_ENCODER1_GetValue(),
                 AZ_ENCODER2_GetValue(), EL_ENCODER1_GetValue(), EL_ENCODER2_GetValue(), 
                 BUTTON1_GetValue(), BUTTON2_GetValue(), BUTTON3_GetValue(), DIAGS_GetValue());
         
@@ -116,6 +125,8 @@ void gpio_test(void)
 void hbridge_test(void)
 {
     char input;
+    uint16_t el_current = 10;
+    uint16_t az_current = 10;
     
     // double check everything is off
     AZ_CONTROL1_SetLow();
@@ -134,10 +145,13 @@ void hbridge_test(void)
 
     do
     {
-        printf("\r%x   %x   %x   %x     %x   %x   %x   %x     ", 
+        printf("\r %x   %x   %x   %x  |  %x   %x   %x   %x | %4u  %4u", 
             AZ_CONTROL1_GetValue(), AZ_CONTROL2_GetValue(), EL_CONTROL1_GetValue(), 
             EL_CONTROL2_GetValue(), AZ_ENCODER1_GetValue(), AZ_ENCODER2_GetValue(), 
-            EL_ENCODER1_GetValue(), EL_ENCODER2_GetValue());
+            EL_ENCODER1_GetValue(), EL_ENCODER2_GetValue(), az_current, el_current);
+        
+        el_current = 3*el_current/4 + ADC1_read(EL_CURRENT)/4;
+        az_current = 3*az_current/4 + ADC1_read(AZ_CURRENT)/4;
         
         input = get_char_tag();
         
@@ -202,6 +216,7 @@ void hbridge_test(void)
                 break;
         }
         ClrWdt();
+        __delay_ms(100);
     }while(input != ESC);
     
     // make sure its all off
@@ -217,14 +232,14 @@ void hbridge_square_wave(void) // test hbridge
     AZ_CONTROL2_SetLow();
     EL_CONTROL1_SetLow();
     EL_CONTROL2_SetLow();
-    printf("\r\n10Hz Square wave to Elevation 1");
+    printf("\r\n0.5Hz Square wave to Elevation 1");
     
     while(get_char_tag() == -1)
     {
         EL_CONTROL1_SetHigh();
-        __delay_ms(50); // todo
+        __delay_ms(1000); // todo
         EL_CONTROL1_SetLow();
-        __delay_ms(50); // todo
+        __delay_ms(1000); // todo
         ClrWdt();
     }
     AZ_CONTROL1_SetLow();
@@ -232,3 +247,77 @@ void hbridge_square_wave(void) // test hbridge
     EL_CONTROL1_SetLow();
     EL_CONTROL2_SetLow();
 }
+
+
+// file scope, count encoder pulses
+uint16_t az1_pulse, az2_pulse, el1_pulse, el2_pulse; // count the changes that are happening. Increment on change
+bool az1, az2, el1, el2; // use these to store the previous state. TODO could use flags in a single byte
+       
+// helper for encoder_test()
+void _encoder_test_callback(void)
+{
+    // increment the encoder pulse variable if 
+    // the input has changed.
+    bool trash = AZ_ENCODER1_GetValue(); 
+    if(az1 != trash)
+    {
+        az1 = trash;
+        az1_pulse ++;
+    }
+    
+    trash = AZ_ENCODER2_GetValue();
+    if(az2 != trash)
+    {
+        az2 = trash;
+        az2_pulse ++;
+    }
+    
+    trash = EL_ENCODER1_GetValue();
+    if(el1 != trash)
+    {
+        el1 = trash;
+        el1_pulse ++;
+    }
+    
+    trash = EL_ENCODER2_GetValue();
+    if(el2 != trash)
+    {
+        el2 = trash;
+        el2_pulse ++;
+    }
+    
+    nSTAT_LED_Toggle();
+}
+
+// test rotary encoder interrupts
+void encoder_test(void)
+{
+    char input = -1;
+    az1_pulse = 0; 
+    az2_pulse = 0; 
+    el1_pulse = 0;
+    el2_pulse = 0;
+    
+    // set initial pin state
+    az1 = AZ_ENCODER1_GetValue();
+    az2 = AZ_ENCODER2_GetValue();
+    el1 = EL_ENCODER1_GetValue();
+    el2 = EL_ENCODER2_GetValue();
+    
+    CN_SetInterruptHandler(_encoder_test_callback); // set callback for CN interrupts
+        
+    printf("\r\nEncoder interrupt test");
+    printf("\r\nPulse counts increment with each change of state");
+    printf("\r\nPulses   |   Pin state ");// note hte pin state is not actually from a port read but from the previous state stored in the interrupt callback 
+    printf("\r\naz1 az2 el1 el2   |  az1 az2 el1 el2\r\n");
+    
+    while(input != ESC)
+    {
+        input = get_char_tag();
+        printf("\r%x %x %x %x | %x %x %x %x", az1_pulse, az2_pulse, el1_pulse, el2_pulse, az1, az2, el1, el2);
+        __delay_ms(100);
+        ClrWdt();
+    }
+}
+
+

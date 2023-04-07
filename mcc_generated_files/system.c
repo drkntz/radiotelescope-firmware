@@ -115,6 +115,8 @@ void SYSTEM_Initialize(void)
     AZ_CONTROL2_SetLow();
     EL_CONTROL1_SetLow();
     EL_CONTROL2_SetLow();
+    
+    INTERRUPT_GlobalEnable(); 
 }
 
 /**

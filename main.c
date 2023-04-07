@@ -5,7 +5,6 @@
  * 
  * TODO: 
  *  * Setup TMR1 as default time base & setup interval checks
- *  * printf over both usb and debug. select which
  *  * diagnostics via diags button and some kind of passcode ('q' 3 times over usb?)
 */
 
@@ -20,7 +19,7 @@ int main(void)
 {
     // initialize the device
     SYSTEM_Initialize();
-    nSTAT_LED_SetDigitalOutput(); // i think this is already done in mcc? TODO
+    //nSTAT_LED_SetDigitalOutput(); // i think this is already done in mcc? TODO
     
     print_uartx = PRINT_TAG;
     printf("\r\nWelcome to the Radio Telescope Control system \r\n");
