@@ -15,15 +15,14 @@
 #include "diagnostic.h"
 #include "mcc_generated_files/uart1.h"
 
+void welcome_message(void);
+
 int main(void)
 {
     // initialize the device
     SYSTEM_Initialize();
-    //nSTAT_LED_SetDigitalOutput(); // i think this is already done in mcc? TODO
     
-    print_uartx = PRINT_TAG;
-    printf("\r\nWelcome to the Radio Telescope Control system \r\n");
-    print_uartx = PRINT_BOTH; // for now, both UARTs will work over printf
+    welcome_message();
     
     diagnostic_main(); // check pins
     
@@ -43,3 +42,17 @@ int main(void)
     return 1;
 }
 
+
+void welcome_message(void)
+{
+    print_output = PRINT_TAG;
+    printf("\r\nRadio Telescope Control System Begin\r\n");
+    
+    lcd_setCursor(0,0);
+
+    print_output = PRINT_LCD;
+    printf("Radio Telescope");
+    lcd_setCursor(0,1);
+    printf("Control System");
+    print_output = PRINT_TAG;
+}

@@ -236,25 +236,21 @@ void lcd_backlight(void) {
 
 // TODO: this is a cheap way to avoid using the arduino write libraries
 // there may be something about register select? send RS??? don't know
-void lcd_write(char *data, size_t len)
+void lcd_write( char *data, uint8_t len) //char *data, size_t len)
 {
-    I2C1_MESSAGE_STATUS status;
-    uint8_t timeout = 100;
+    uint8_t i;
     
-    I2C1_MasterWrite(data, len, _Addr, &status);
-    
-    while(status == I2C1_MESSAGE_PENDING && timeout > 0)
+    for(i=0; i < len; i++)
     {
-        timeout--;
-        __delay_ms(1);
+        _send(*(data + i), Rs);
     }
-    if(status == I2C1_MESSAGE_COMPLETE) // success!
-    {
-        // TODO: could throw some flag indicating success or failure
-        return;
-    } 
 }
 
+// this is used for printf formatting for the LCD display
+void lcd_printf_write(char data)
+{
+    _send(data, Rs);
+}
 
 /*********** mid level commands, for sending data/cmds */
 

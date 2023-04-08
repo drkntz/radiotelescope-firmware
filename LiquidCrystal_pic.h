@@ -76,7 +76,8 @@ void lcd_autoscroll(void);  // this will right justify text from cursor
 void lcd_noAutoscroll(void);  // this will left justify text from cursor
 void lcd_createChar(uint8_t location, uint8_t charmap[]);// Allows us to fill the first 8 CGRAM locations with custom characters
 void lcd_noBacklight(void); // disable backlight
-void lcdbacklight(void);    // enable backlight
-void lcd_write(char *data, size_t len); // write a character array to lcd
+void lcd_backlight(void);    // enable backlight
+void lcd_write(char *data, uint8_t len);//char *data, size_t len); // write a character array to lcd
+void lcd_printf_write(char data); // this is used for printf writing to LCD display
 
 #endif // LiquidCrystal_PIC_h

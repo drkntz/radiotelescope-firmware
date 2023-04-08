@@ -61,10 +61,11 @@
 enum {
     PRINT_TAG, // uart2
     PRINT_USB, // uart1
-    PRINT_BOTH
+    PRINT_BOTH, // both UARTs
+    PRINT_LCD  // print only on LCD
 };
 
-extern uint8_t print_uartx; // which one to print to 
+extern uint8_t print_output; // which one to print to 
 
 /**
   Section: UART2 APIs

@@ -17,6 +17,7 @@ void gpio_test(void);    // test inputs & outputs,
 void hbridge_test(void); // test hbridge
 void hbridge_square_wave(void); // test hbridge
 void encoder_test(void); // test rotary encoders
+void lcd_test(void);
 
 // helper for encoder_test()
 void _encoder_test_callback(void);
@@ -38,6 +39,7 @@ void diagnostic_main(void)
                 "\r\n2 - GPIO test"
                 "\r\n3 - H-Bridge test"
                 "\r\n4 - Read encoder interrupts"
+                "\r\n5 - Test LCD"
                 "\r\nESC to exit and return to previous menu"
                 "\r\nEnter option: ");
 
@@ -58,6 +60,9 @@ void diagnostic_main(void)
                 break;
             case '4':
                 encoder_test();
+                break;
+            case '5':
+                lcd_test();
                 break;
             case ESC:
                 return; // go back to main
@@ -320,4 +325,32 @@ void encoder_test(void)
     }
 }
 
-
+// test LCD over i2c
+void lcd_test(void)
+{
+    uint8_t uartx_save;
+    
+    lcd_create(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display 
+    lcd_init();
+    lcd_backlight();
+    lcd_clear();
+    
+    lcd_setCursor(0,1);
+    
+    uartx_save = print_output;
+    
+    print_output = PRINT_LCD;
+    
+    //lcd_write(msg, 5);
+    printf("This is the bestest project ever created");
+    
+    for(uint8_t i = 0; i < 50; i++)
+    {
+        __delay_ms(1000);
+        lcd_scrollDisplayLeft();
+        ClrWdt();
+    }
+    
+    print_output = uartx_save;
+    printf("\r\nDone");
+}

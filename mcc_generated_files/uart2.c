@@ -48,10 +48,11 @@
 #include <xc.h>
 #include "uart2.h"
 #include "uart1.h"
+#include "../LiquidCrystal_pic.h"
 
 
 
-uint8_t print_uartx; // which one to print to 
+uint8_t print_output; // which one to print to 
 
 /**
   Section: UART2 APIs
@@ -122,7 +123,7 @@ int __attribute__((__section__(".libc.write"))) write(int handle, void *buffer, 
 
     for (i = len; i; --i)
     {
-        switch(print_uartx)
+        switch(print_output)
         {
             case PRINT_USB: // UART1, USB connection
                 UART1_Write(*(char*)buffer++);
@@ -130,8 +131,17 @@ int __attribute__((__section__(".libc.write"))) write(int handle, void *buffer, 
                 
             case PRINT_BOTH: // print both of them
                 UART1_Write(*(char*)buffer);
+                UART2_Write(*(char*)buffer++);
+                break;
                 
             case PRINT_TAG:
+                UART2_Write(*(char*)buffer++);
+                break;
+                
+            case PRINT_LCD:
+                lcd_printf_write(*(char*)buffer++);
+                break;
+                
             default: // debug, UART2
                 UART2_Write(*(char*)buffer++);
                 break;

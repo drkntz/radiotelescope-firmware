@@ -98,6 +98,7 @@
 #include "traps.h"
 #include "adc1.h"
 #include "tmr1.h"
+#include "../LiquidCrystal_pic.h"
 
 void SYSTEM_Initialize(void)
 {
@@ -117,6 +118,11 @@ void SYSTEM_Initialize(void)
     EL_CONTROL2_SetLow();
     
     INTERRUPT_GlobalEnable(); 
+    
+    lcd_create(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display 
+    lcd_init();
+    lcd_backlight();
+    lcd_clear();
 }
 
 /**
