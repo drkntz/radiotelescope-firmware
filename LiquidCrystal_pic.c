@@ -6,9 +6,6 @@
 // TODO: deal with these includes
 #include "LiquidCrystal_pic.h"
 #include "mcc_generated_files/i2c1.h"
-#include <inttypes.h>
-#include "WProgram.h"
-
 
 // TODO: do I have to use "static" for variables as well as local scope functions?
 /* Local scope */ 
@@ -17,6 +14,7 @@ static void _send(uint8_t, uint8_t);
 static void _write4bits(uint8_t);
 static void _expanderWrite(uint8_t);
 static void _pulseEnable(uint8_t);
+static inline void _command(uint8_t value);
 static uint8_t _Addr;
 static uint8_t _displayfunction;
 static uint8_t _displaycontrol;
@@ -27,14 +25,11 @@ static uint8_t _rows;
 static uint8_t _backlightval;
 
 
-// TODO:
-#define printIIC(args)	Wire.send(args)
-inline void LiquidCrystal_I2C::write(uint8_t value) {
-	send(value, Rs);
-}
-
-#endif
-#include "Wire.h"
+//// TODO:
+//#define printIIC(args)	Wire.send(args)
+//inline void LiquidCrystal_I2C::write(uint8_t value) {
+//	send(value, Rs);
+//}
 
 
 
@@ -57,9 +52,8 @@ inline void LiquidCrystal_I2C::write(uint8_t value) {
 // can't assume that its in that state when a sketch starts (and the
 // LiquidCrystal constructor is called).
 
-
-// TODO: c-ify
-LiquidCrystal_I2C::LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows)
+// this replaces the object declaration in C++
+void lcd_create(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows)
 {
   _Addr = lcd_Addr;
   _cols = lcd_cols;
@@ -69,14 +63,14 @@ LiquidCrystal_I2C::LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t l
 
 // global scope initialize
 void lcd_init(){
-	init_priv();
+	_init_priv();
 }
 
-static void _lcd_init_priv()
+static void _init_priv()
 {
 	// if not already done in system init, you would put I2C1_Initialize() here.
 	_displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
-	begin(_cols, _rows);  
+	lcd_begin(_cols, _rows, 0);  // TODO: I just set dotsize to zero for now. don't think we need to or can do that 10dot high thing 
 }
 
 void lcd_begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
@@ -103,7 +97,7 @@ void lcd_begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 	// this is according to the hitachi HD44780 datasheet
 	// figure 24, pg 46
 	
-	  // we start in 8bit mode, try to set 4 bit mode
+    // we start in 8bit mode, try to set 4 bit mode
    _write4bits(0x03 << 4);
    __delay_us(4500); // wait min 4.1ms
    
@@ -120,33 +114,33 @@ void lcd_begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 
 
 	// set # lines, font size, etc.
-	command(LCD_FUNCTIONSET | _displayfunction);  
+	_command(LCD_FUNCTIONSET | _displayfunction);  
 	
 	// turn the display on with no cursor or blinking default
 	_displaycontrol = LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF;
-	display();
+	lcd_display();
 	
 	// clear it off
-	clear();
+	lcd_clear();
 	
 	// Initialize to default text direction (for roman languages)
 	_displaymode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
 	
 	// set the entry mode
-	command(LCD_ENTRYMODESET | _displaymode);
+	_command(LCD_ENTRYMODESET | _displaymode);
 	
-	home();
+	lcd_home();
 }
 
 /********** high level commands, for the user! */
 void lcd_clear(){
-	command(LCD_CLEARDISPLAY);// clear display, set cursor position to zero
-	delayMicroseconds(2000);  // this command takes a long time!
+	_command(LCD_CLEARDISPLAY);// clear display, set cursor position to zero
+	__delay_ms(2);  // this command takes a long time!
 }
 
 void lcd_home(){
-	command(LCD_RETURNHOME);  // set cursor position to zero
-	delayMicroseconds(2000);  // this command takes a long time!
+	_command(LCD_RETURNHOME);  // set cursor position to zero
+	__delay_ms(2);  // this command takes a long time!
 }
 
 void lcd_setCursor(uint8_t col, uint8_t row){
@@ -154,98 +148,118 @@ void lcd_setCursor(uint8_t col, uint8_t row){
 	if ( row > _numlines ) {
 		row = _numlines-1;    // we count rows starting w/0
 	}
-	command(LCD_SETDDRAMADDR | (col + row_offsets[row]));
+	_command(LCD_SETDDRAMADDR | (col + row_offsets[row]));
 }
 
 // Turn the display on/off (quickly)
 void lcd_noDisplay() {
 	_displaycontrol &= ~LCD_DISPLAYON;
-	command(LCD_DISPLAYCONTROL | _displaycontrol);
+	_command(LCD_DISPLAYCONTROL | _displaycontrol);
 }
 void lcd_display() {
 	_displaycontrol |= LCD_DISPLAYON;
-	command(LCD_DISPLAYCONTROL | _displaycontrol);
+	_command(LCD_DISPLAYCONTROL | _displaycontrol);
 }
 
 // Turns the underline cursor on/off
 void lcd_noCursor() {
 	_displaycontrol &= ~LCD_CURSORON;
-	command(LCD_DISPLAYCONTROL | _displaycontrol);
+	_command(LCD_DISPLAYCONTROL | _displaycontrol);
 }
 void lcd_cursor() {
 	_displaycontrol |= LCD_CURSORON;
-	command(LCD_DISPLAYCONTROL | _displaycontrol);
+	_command(LCD_DISPLAYCONTROL | _displaycontrol);
 }
 
 // Turn on and off the blinking cursor
 void lcd_noBlink() {
 	_displaycontrol &= ~LCD_BLINKON;
-	command(LCD_DISPLAYCONTROL | _displaycontrol);
+	_command(LCD_DISPLAYCONTROL | _displaycontrol);
 }
 void lcd_blink() {
 	_displaycontrol |= LCD_BLINKON;
-	command(LCD_DISPLAYCONTROL | _displaycontrol);
+	_command(LCD_DISPLAYCONTROL | _displaycontrol);
 }
 
 // These commands scroll the display without changing the RAM
 void lcd_scrollDisplayLeft(void) {
-	command(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVELEFT);
+	_command(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVELEFT);
 }
 void lcd_scrollDisplayRight(void) {
-	command(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVERIGHT);
+	_command(LCD_CURSORSHIFT | LCD_DISPLAYMOVE | LCD_MOVERIGHT);
 }
 
 // This is for text that flows Left to Right
 void lcd_leftToRight(void) {
 	_displaymode |= LCD_ENTRYLEFT;
-	command(LCD_ENTRYMODESET | _displaymode);
+	_command(LCD_ENTRYMODESET | _displaymode);
 }
 
 // This is for text that flows Right to Left
 void lcd_rightToLeft(void) {
 	_displaymode &= ~LCD_ENTRYLEFT;
-	command(LCD_ENTRYMODESET | _displaymode);
+	_command(LCD_ENTRYMODESET | _displaymode);
 }
 
 // This will 'right justify' text from the cursor
 void lcd_autoscroll(void) {
 	_displaymode |= LCD_ENTRYSHIFTINCREMENT;
-	command(LCD_ENTRYMODESET | _displaymode);
+	_command(LCD_ENTRYMODESET | _displaymode);
 }
 
 // This will 'left justify' text from the cursor
 void lcd_noAutoscroll(void) {
 	_displaymode &= ~LCD_ENTRYSHIFTINCREMENT;
-	command(LCD_ENTRYMODESET | _displaymode);
+	_command(LCD_ENTRYMODESET | _displaymode);
 }
 
 // Allows us to fill the first 8 CGRAM locations
 // with custom characters
 void lcd_createChar(uint8_t location, uint8_t charmap[]) {
 	location &= 0x7; // we only have 8 locations 0-7
-	command(LCD_SETCGRAMADDR | (location << 3));
+	_command(LCD_SETCGRAMADDR | (location << 3));
 	for (int i=0; i<8; i++) {
-		write(charmap[i]);
+		_send(charmap[i], Rs);
 	}
 }
 
 // Turn the (optional) backlight off/on
 void lcd_noBacklight(void) {
 	_backlightval=LCD_NOBACKLIGHT;
-	expanderWrite(0);
+	_expanderWrite(0);
 }
 
 void lcd_backlight(void) {
 	_backlightval=LCD_BACKLIGHT;
-	expanderWrite(0);
+	_expanderWrite(0);
 }
 
+// TODO: this is a cheap way to avoid using the arduino write libraries
+// there may be something about register select? send RS??? don't know
+void lcd_write(char *data, size_t len)
+{
+    I2C1_MESSAGE_STATUS status;
+    uint8_t timeout = 100;
+    
+    I2C1_MasterWrite(data, len, _Addr, &status);
+    
+    while(status == I2C1_MESSAGE_PENDING && timeout > 0)
+    {
+        timeout--;
+        __delay_ms(1);
+    }
+    if(status == I2C1_MESSAGE_COMPLETE) // success!
+    {
+        // TODO: could throw some flag indicating success or failure
+        return;
+    } 
+}
 
 
 /*********** mid level commands, for sending data/cmds */
 
-inline void lcd_command(uint8_t value) {
-	send(value, 0);
+static inline void _command(uint8_t value) {
+	_send(value, 0);
 }
 
 
@@ -255,63 +269,40 @@ inline void lcd_command(uint8_t value) {
 void _send(uint8_t value, uint8_t mode) {
 	uint8_t highnib=value&0xf0;
 	uint8_t lownib=(value<<4)&0xf0;
-       write4bits((highnib)|mode);
-	write4bits((lownib)|mode); 
+    _write4bits((highnib)|mode);
+	_write4bits((lownib)|mode); 
 }
 
 void _write4bits(uint8_t value) {
-	expanderWrite(value);
-	pulseEnable(value);
+	_expanderWrite(value);
+	_pulseEnable(value);
 }
 
-void _expanderWrite(uint8_t _data){                                        
-	Wire.beginTransmission(_Addr);
-	printIIC((int)(_data) | _backlightval);
-	Wire.endTransmission();   
+// write to expander using I2C1 driver
+void _expanderWrite(uint8_t _data)
+{ 
+    I2C1_MESSAGE_STATUS status;
+    uint8_t timeout = 100;      // TODO: wait 100ms for display to respond
+    uint8_t newdata = _data | _backlightval;
+    
+    I2C1_MasterWrite(&newdata, 1, _Addr, &status);
+    
+    while(status == I2C1_MESSAGE_PENDING && timeout > 0)
+    {
+        timeout--;
+        __delay_ms(1);
+    }
+    if(status == I2C1_MESSAGE_COMPLETE) // success!
+    {
+        // TODO: could throw some flag indicating success or failure
+        return;
+    } 
 }
 
 void _pulseEnable(uint8_t _data){
-	expanderWrite(_data | En);	// En high
-	delayMicroseconds(1);		// enable pulse must be >450ns
+	_expanderWrite(_data | En);	// En high
+	__delay_us(1);		// enable pulse must be >450ns
 	
-	expanderWrite(_data & ~En);	// En low
-	delayMicroseconds(50);		// commands need > 37us to settle
+	_expanderWrite(_data & ~En);	// En low
+	__delay_us(50);		// commands need > 37us to settle
 } 
-
-
-// Alias functions
-
-void lcd_cursor_on(){
-	cursor();
-}
-
-void lcd_cursor_off(){
-	noCursor();
-}
-
-void lcd_blink_on(){
-	blink();
-}
-
-void lcd_blink_off(){
-	noBlink();
-}
-
-void lcd_load_custom_character(uint8_t char_num, uint8_t *rows){
-		createChar(char_num, rows);
-}
-
-void lcd_setBacklight(uint8_t new_val){
-	if(new_val){
-		backlight();		// turn backlight on
-	}else{
-		noBacklight();		// turn backlight off
-	}
-}
-
-// TODO: print?
-void lcd_printstr(const char c[]){
-	//This function is not identical to the function used for "real" I2C displays
-	//it's here so the user sketch doesn't have to be changed 
-	print(c);
-}

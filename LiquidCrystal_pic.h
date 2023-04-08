@@ -3,13 +3,9 @@
  * Zach Martin, 4/8/23
  */
  
-//YWROBOT
-#ifndef LiquidCrystal_I2C_h
-#define LiquidCrystal_I2C_h
-
-#include <inttypes.h>
-#include "Print.h" 
-#include <Wire.h>
+#ifndef LiquidCrystal_PIC_h
+#define LiquidCrystal_PIC_h
+#include "common.h" // for common utilities and delays
 
 // commands
 #define LCD_CLEARDISPLAY 0x01
@@ -53,79 +49,34 @@
 #define LCD_BACKLIGHT 0x08
 #define LCD_NOBACKLIGHT 0x00
 
-#define En B00000100  // Enable bit
-#define Rw B00000010  // Read/Write bit
-#define Rs B00000001  // Register select bit
+#define En 0b00000100  // Enable bit
+#define Rw 0b00000010  // Read/Write bit
+#define Rs 0b00000001  // Register select bit
 
-class LiquidCrystal_I2C : public Print {
-public:
-  LiquidCrystal_I2C(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows);
-  void begin(uint8_t cols, uint8_t rows, uint8_t charsize = LCD_5x8DOTS );
-  void clear();
-  void home();
-  void noDisplay();
-  void display();
-  void noBlink();
-  void blink();
-  void noCursor();
-  void cursor();
-  void scrollDisplayLeft();
-  void scrollDisplayRight();
-  void printLeft();
-  void printRight();
-  void leftToRight();
-  void rightToLeft();
-  void shiftIncrement();
-  void shiftDecrement();
-  void noBacklight();
-  void backlight();
-  void autoscroll();
-  void noAutoscroll(); 
-  void createChar(uint8_t, uint8_t[]);
-  void setCursor(uint8_t, uint8_t); 
-#if defined(ARDUINO) && ARDUINO >= 100
-  virtual size_t write(uint8_t);
-#else
-  virtual void write(uint8_t);
-#endif
-  void command(uint8_t);
-  void init();
+// Public functions ////////////////////////////////////////////////////////////
+void lcd_create(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows); // Use this to setup initially
+void lcd_init();        // start device
+void lcd_begin(uint8_t cols, uint8_t lines, uint8_t dotsize); // this is actually called in init, no need to call it explicitly? TODO: make private
 
-////compatibility API function aliases
-void blink_on();						// alias for blink()
-void blink_off();       					// alias for noBlink()
-void cursor_on();      	 					// alias for cursor()
-void cursor_off();      					// alias for noCursor()
-void setBacklight(uint8_t new_val);				// alias for backlight() and nobacklight()
-void load_custom_character(uint8_t char_num, uint8_t *rows);	// alias for createChar()
-void printstr(const char[]);
+/* Use these for high-level commands */
+void lcd_clear();       // clear display & set cursor position to 0
+void lcd_home();        // set cursor position to 0
+void lcd_setCursor(uint8_t col, uint8_t row);   // set arbitrary cursor position
+void lcd_noDisplay();   // turn off display
+void lcd_display();     // turn on display
+void lcd_noCursor();    // hide underline cursor
+void lcd_cursor();      // display underline cursor
+void lcd_noBlink();     // cursor does not blink
+void lcd_blink();       // cursor will blink
+void lcd_scrollDisplayLeft(void);   // scroll words
+void lcd_scrollDisplayRight(void);   // scroll words
+void lcd_leftToRight(void); // text that flows left to right
+void lcd_rightToLeft(void); // text that flows right to left
+void lcd_autoscroll(void);  // this will right justify text from cursor
+void lcd_noAutoscroll(void);  // this will left justify text from cursor
+void lcd_createChar(uint8_t location, uint8_t charmap[]);// Allows us to fill the first 8 CGRAM locations with custom characters
+void lcd_noBacklight(void); // disable backlight
+void lcdbacklight(void);    // enable backlight
+void lcd_write(char *data, size_t len); // write a character array to lcd
 
-////Unsupported API functions (not implemented in this library)
-uint8_t status();
-void setContrast(uint8_t new_val);
-uint8_t keypad();
-void setDelay(int,int);
-void on();
-void off();
-uint8_t init_bargraph(uint8_t graphtype);
-void draw_horizontal_graph(uint8_t row, uint8_t column, uint8_t len,  uint8_t pixel_col_end);
-void draw_vertical_graph(uint8_t row, uint8_t column, uint8_t len,  uint8_t pixel_col_end);
-	 
-
-private:
-  void init_priv();
-  void send(uint8_t, uint8_t);
-  void write4bits(uint8_t);
-  void expanderWrite(uint8_t);
-  void pulseEnable(uint8_t);
-  uint8_t _Addr;
-  uint8_t _displayfunction;
-  uint8_t _displaycontrol;
-  uint8_t _displaymode;
-  uint8_t _numlines;
-  uint8_t _cols;
-  uint8_t _rows;
-  uint8_t _backlightval;
-};
-
-#endif
+#endif // LiquidCrystal_PIC_h
