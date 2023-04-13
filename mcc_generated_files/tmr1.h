@@ -316,8 +316,11 @@ int TMR1_SoftwareCounterGet(void);
 
 void TMR1_SoftwareCounterClear(void);
 
-/* Interval check in ms. Only supports intervals < 16.9 seconds */
-uint16_t timestamp_ms(void);
+// get raw ticks. This is the same as timer1 counter 16bit get
+uint16_t timestamp_raw(void);
+
+// convert raw timestamp to ms
+uint16_t timestamp_to_ms(uint16_t timestamp);
 
 #ifdef __cplusplus  // Provide C++ Compatibility
 

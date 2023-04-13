@@ -182,17 +182,22 @@ void TMR1_SoftwareCounterClear(void)
     tmr1_obj.count = 0; 
 }
 
-/* Get current timestamp, in ms 
+/* Convert timer1 ticks to ms
  * This method has a max time of 65,536 counts. 
  * Period is 1/3.875k = 258.06us. Max time ~= 16.9 seconds.
  * TODO: we could come up with a method for longer time?
  */
-uint16_t timestamp_ms(void)
+uint16_t timestamp_to_ms(uint16_t timestamp)
 {
     uint16_t result;
-    
-    result = TMR1_Counter16BitGet();
-    result = result/3.875;
-    
+    result = timestamp/3.875;
     return result; 
+}
+        
+/* get "raw" timestamp
+ * this is the clock ticks of TMR1
+ */
+uint16_t timestamp_raw(void)
+{
+    return TMR1_Counter16BitGet();
 }

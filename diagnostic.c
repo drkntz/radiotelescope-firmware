@@ -18,7 +18,7 @@ void hbridge_test(void); // test hbridge
 void hbridge_square_wave(void); // test hbridge
 void encoder_test(void); // test rotary encoders
 void lcd_test(void);
-void timer_test(void); // test interval with tmr1
+//void timer_test(void); // test interval with tmr1
 
 // helper for encoder_test()
 void _encoder_test_callback(void);
@@ -68,7 +68,7 @@ void diagnostic_main(void)
                 lcd_test();
                 break;
             case '6':
-                timer_test();
+                //timer_test();
                 break;
             case 'Q':
             case 'q':
@@ -378,37 +378,37 @@ void lcd_test(void)
     printf("\r\nDone");
 }
 
-void timer_test(void)
-{
-    char input = -1;
-    bool statusTimer1;
-    uint16_t period;
-    uint16_t value;
-    uint16_t timestamp;
-    
-    period = 0xFFFF;
-
-    TMR1_Initialize();
-
-    TMR1_Period16BitSet(period);
-    __delay_ms(1);
-
-    if(TMR1_Period16BitGet()== period)
-    {
-        TMR1_Start();
-    }
-    
-    TP6_SetDigitalOutput(); //testing
-    
-    timestamp = timestamp_ms();
-    
-    do{
-        if(timestamp_ms() - timestamp >= 5) // 100hz square wave
-        {
-            TP6_Toggle();
-            timestamp = timestamp_ms();
-        }
-        //ClrWdt();
-        //input = get_char_tag(); // get input from debug
-    }while(input == -1);
-}
+//void timer_test(void)
+//{
+//    char input = -1;
+//    bool statusTimer1;
+//    uint16_t period;
+//    uint16_t value;
+//    uint16_t timestamp;
+//    
+//    period = 0xFFFF;
+//
+//    TMR1_Initialize();
+//
+//    TMR1_Period16BitSet(period);
+//    __delay_ms(1);
+//
+//    if(TMR1_Period16BitGet()== period)
+//    {
+//        TMR1_Start();
+//    }
+//    
+//    TP6_SetDigitalOutput(); //testing
+//    
+//    timestamp = timestamp_ms();
+//    
+//    do{
+//        if(timestamp_ms() - timestamp >= 5) // 100hz square wave
+//        {
+//            TP6_Toggle();
+//            timestamp = timestamp_ms();
+//        }
+//        //ClrWdt();
+//        //input = get_char_tag(); // get input from debug
+//    }while(input == -1);
+//}

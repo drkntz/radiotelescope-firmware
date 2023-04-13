@@ -110,6 +110,8 @@ void SYSTEM_Initialize(void)
     UART1_Initialize();
     ADC1_Initialize();
     TMR1_Initialize();
+    TMR1_Period16BitSet(0xFFFF); // use the full timer period
+    TMR1_Start();
     
     // Make sure everything is off
     AZ_CONTROL1_SetLow();

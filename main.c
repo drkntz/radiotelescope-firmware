@@ -4,7 +4,6 @@
  * Date: 3/9/2023
  * 
  * TODO: 
- *  * Setup TMR1 as default time base & setup interval checks
  *  * diagnostics via diags button and some kind of passcode ('q' 3 times over usb?)
 */
 
@@ -26,17 +25,29 @@ int main(void)
     
     diagnostic_main(); // check pins
     
-    char test = 0;
+    uint16_t led_time = timestamp_raw();
     
+    // The superlooop
     while (1)
     {           
-        //TMR1_Tasks_16BitOperation();
-
-        test = get_char_tag();
-        if(test != -1) printf("\r\n test = %c", test);
-        nSTAT_LED_Toggle();
+        /* From notes: this is the superloop
+         * read PC commands
+         * read buttons
+         * update rotary encoders
+         * update motors
+         * send status at 3Hz (check notes)
+         * refresh LCD
+         * blink status LEDs
+         */
+        
+        if(timestamp_to_ms(timestamp_raw() - led_time) > 250) 
+        {
+            nSTAT_LED_Toggle(); // "Heartbeat" LED
+            led_time = timestamp_raw();
+        }
+        
+        //printf("\r\nstamp = %u", timestamp_ms());
         ClrWdt();
-        __delay_ms(500);
     }
 
     return 1;
