@@ -18,6 +18,7 @@ void hbridge_test(void); // test hbridge
 void hbridge_square_wave(void); // test hbridge
 void encoder_test(void); // test rotary encoders
 void lcd_test(void);
+void timer_test(void); // test interval with tmr1
 
 // helper for encoder_test()
 void _encoder_test_callback(void);
@@ -40,13 +41,15 @@ void diagnostic_main(void)
                 "\r\n3 - H-Bridge test"
                 "\r\n4 - Read encoder interrupts"
                 "\r\n5 - Test LCD"
-                "\r\nESC to exit and return to previous menu"
+                "\r\nQ - Quit diagnostic and go back to main"
                 "\r\nEnter option: ");
 
         input = get_char_wait_tag();
-
+        uint16_t myvar = 0xFFFF;
+        uint16_t var2 = myvar/3.875;
+        
         printf("%c\r\n", input);
-
+        
         switch(input)
         {
             case '1':
@@ -64,8 +67,14 @@ void diagnostic_main(void)
             case '5':
                 lcd_test();
                 break;
-            case ESC:
-                return; // go back to main
+            case '6':
+                timer_test();
+                break;
+            case 'Q':
+            case 'q':
+                return;
+            default:
+                break; // don't do anything
         }
     }
 }
@@ -309,6 +318,15 @@ void encoder_test(void)
     el1 = EL_ENCODER1_GetValue();
     el2 = EL_ENCODER2_GetValue();
     
+    AZ_CONTROL1_SetLow();
+    AZ_CONTROL2_SetLow();
+    
+    EL_CONTROL2_SetLow();
+    EL_CONTROL1_SetLow();
+    __delay_ms(250); // todo
+    EL_CONTROL1_SetHigh();
+    __delay_ms(100); // todo
+    
     CN_SetInterruptHandler(_encoder_test_callback); // set callback for CN interrupts
         
     printf("\r\nEncoder interrupt test");
@@ -316,13 +334,18 @@ void encoder_test(void)
     printf("\r\nPulses   |   Pin state ");// note hte pin state is not actually from a port read but from the previous state stored in the interrupt callback 
     printf("\r\naz1 az2 el1 el2   |  az1 az2 el1 el2\r\n");
     
-    while(input != ESC)
+    while(input != ESC && el1_pulse < 35650)
     {
         input = get_char_tag();
-        printf("\r%x %x %x %x | %x %x %x %x", az1_pulse, az2_pulse, el1_pulse, el2_pulse, az1, az2, el1, el2);
+        printf("\r%u %u %u %u | %x %x %x %x", az1_pulse, az2_pulse, el1_pulse, el2_pulse, az1, az2, el1, el2);
         __delay_ms(100);
         ClrWdt();
     }
+    
+    AZ_CONTROL1_SetLow();
+    AZ_CONTROL2_SetLow();
+    EL_CONTROL2_SetLow();
+    EL_CONTROL1_SetLow();
 }
 
 // test LCD over i2c
@@ -353,4 +376,39 @@ void lcd_test(void)
     
     print_output = uartx_save;
     printf("\r\nDone");
+}
+
+void timer_test(void)
+{
+    char input = -1;
+    bool statusTimer1;
+    uint16_t period;
+    uint16_t value;
+    uint16_t timestamp;
+    
+    period = 0xFFFF;
+
+    TMR1_Initialize();
+
+    TMR1_Period16BitSet(period);
+    __delay_ms(1);
+
+    if(TMR1_Period16BitGet()== period)
+    {
+        TMR1_Start();
+    }
+    
+    TP6_SetDigitalOutput(); //testing
+    
+    timestamp = timestamp_ms();
+    
+    do{
+        if(timestamp_ms() - timestamp >= 5) // 100hz square wave
+        {
+            TP6_Toggle();
+            timestamp = timestamp_ms();
+        }
+        //ClrWdt();
+        //input = get_char_tag(); // get input from debug
+    }while(input == -1);
 }

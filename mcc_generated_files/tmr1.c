@@ -94,7 +94,8 @@ void TMR1_Initialize (void)
     PR1 = 0x01;
     //TCKPS 1:1; TON enabled; TSIDL disabled; TCS External; TECS T1CK; TSYNC disabled; TGATE disabled; 
     T1CON = 0x8102;
-
+    T1CONbits.T1ECS = 0b10; // Source = LPRC (31kHz)
+    T1CONbits.TCKPS = 0b01; // 1:8 prescaler, so we have 3.875kHz now
 	
     tmr1_obj.timerElapsed = false;
 
@@ -181,6 +182,17 @@ void TMR1_SoftwareCounterClear(void)
     tmr1_obj.count = 0; 
 }
 
-/**
- End of File
-*/
+/* Get current timestamp, in ms 
+ * This method has a max time of 65,536 counts. 
+ * Period is 1/3.875k = 258.06us. Max time ~= 16.9 seconds.
+ * TODO: we could come up with a method for longer time?
+ */
+uint16_t timestamp_ms(void)
+{
+    uint16_t result;
+    
+    result = TMR1_Counter16BitGet();
+    result = result/3.875;
+    
+    return result; 
+}

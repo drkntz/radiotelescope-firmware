@@ -316,6 +316,9 @@ int TMR1_SoftwareCounterGet(void);
 
 void TMR1_SoftwareCounterClear(void);
 
+/* Interval check in ms. Only supports intervals < 16.9 seconds */
+uint16_t timestamp_ms(void);
+
 #ifdef __cplusplus  // Provide C++ Compatibility
 
     }
