@@ -1,5 +1,6 @@
 /* Adapted from DFRobot Arduino code
- * Drive i2c display with PIC24
+ * Drive 16x2 alphanumeric i2c display with PIC24
+ *
  * Zach Martin, 4/8/23
  */
  
@@ -56,7 +57,6 @@
 // Public functions ////////////////////////////////////////////////////////////
 void lcd_create(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows); // Use this to setup initially
 void lcd_init();        // start device
-void lcd_begin(uint8_t cols, uint8_t lines, uint8_t dotsize); // this is actually called in init, no need to call it explicitly? TODO: make private
 
 /* Use these for high-level commands */
 void lcd_clear();       // clear display & set cursor position to 0

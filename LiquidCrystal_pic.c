@@ -1,20 +1,19 @@
 /* Adapted from DFRobot Arduino code
- * Drive i2c display with PIC24
+ * Drive 16x2 alphanumeric i2c display with PIC24
+ *
  * Zach Martin, 4/8/23
  */
 
-// TODO: deal with these includes
 #include "LiquidCrystal_pic.h"
 #include "mcc_generated_files/i2c1.h"
 
-// TODO: do I have to use "static" for variables as well as local scope functions?
 /* Local scope */ 
-static void _init_priv();
 static void _send(uint8_t, uint8_t);
 static void _write4bits(uint8_t);
 static void _expanderWrite(uint8_t);
 static void _pulseEnable(uint8_t);
 static inline void _command(uint8_t value);
+static void _lcd_begin(uint8_t cols, uint8_t lines, uint8_t dotsize);
 static uint8_t _Addr;
 static uint8_t _displayfunction;
 static uint8_t _displaycontrol;
@@ -23,14 +22,6 @@ static uint8_t _numlines;
 static uint8_t _cols;
 static uint8_t _rows;
 static uint8_t _backlightval;
-
-
-//// TODO:
-//#define printIIC(args)	Wire.send(args)
-//inline void LiquidCrystal_I2C::write(uint8_t value) {
-//	send(value, Rs);
-//}
-
 
 
 // When the display powers up, it is configured as follows:
@@ -48,11 +39,9 @@ static uint8_t _backlightval;
 //    I/D = 1; Increment by 1
 //    S = 0; No shift 
 //
-// Note, however, that resetting the Arduino doesn't reset the LCD, so we
-// can't assume that its in that state when a sketch starts (and the
-// LiquidCrystal constructor is called).
+// The display must be reset whenever the mcu is reset or it may retain previous state
 
-// this replaces the object declaration in C++
+// Define the LCD size EG 16x2
 void lcd_create(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows)
 {
   _Addr = lcd_Addr;
@@ -63,17 +52,13 @@ void lcd_create(uint8_t lcd_Addr,uint8_t lcd_cols,uint8_t lcd_rows)
 
 // global scope initialize
 void lcd_init(){
-	_init_priv();
-}
-
-static void _init_priv()
-{
 	// if not already done in system init, you would put I2C1_Initialize() here.
 	_displayfunction = LCD_4BITMODE | LCD_1LINE | LCD_5x8DOTS;
-	lcd_begin(_cols, _rows, 0);  // TODO: I just set dotsize to zero for now. don't think we need to or can do that 10dot high thing 
+	_lcd_begin(_cols, _rows, 0);
 }
 
-void lcd_begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
+
+static void _lcd_begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 	if (lines > 1) {
 		_displayfunction |= LCD_2LINE;
 	}
@@ -86,7 +71,7 @@ void lcd_begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
 
 	// SEE PAGE 45/46 FOR INITIALIZATION SPECIFICATION!
 	// according to datasheet, we need at least 40ms after power rises above 2.7V
-	// before sending commands. Arduino can turn on way befer 4.5V so we'll wait 50
+	// before sending commands.
 	__delay_ms(50); 
   
 	// Now we pull both RS and R/W low to begin commands
@@ -111,7 +96,6 @@ void lcd_begin(uint8_t cols, uint8_t lines, uint8_t dotsize) {
    
    // finally, set to 4-bit interface
    _write4bits(0x02 << 4); 
-
 
 	// set # lines, font size, etc.
 	_command(LCD_FUNCTIONSET | _displayfunction);  
@@ -234,9 +218,17 @@ void lcd_backlight(void) {
 	_expanderWrite(0);
 }
 
-// TODO: this is a cheap way to avoid using the arduino write libraries
-// there may be something about register select? send RS??? don't know
-void lcd_write( char *data, uint8_t len) //char *data, size_t len)
+/* Send a character array to the LCD. 
+ * We can also use printf() and its syntax by changing the write() function in uart2.c 
+ * to point to the LCD instead of the UART. 
+ * For example: 
+ *
+ * print_output = PRINT_LCD; // change global printf() setting
+ * printf("This goes to LCD");
+ * print_output = PRINT_TAG; 
+ * printf("\r\nThis goes to tag-connect debug port");
+ */
+void lcd_write( char *data, uint8_t len)
 {
     uint8_t i;
     
@@ -253,7 +245,7 @@ void lcd_printf_write(char data)
 }
 
 /*********** mid level commands, for sending data/cmds */
-
+// Local scope
 static inline void _command(uint8_t value) {
 	_send(value, 0);
 }
