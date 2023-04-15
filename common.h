@@ -1,6 +1,6 @@
 /* common.h
  * Common libraries and constants for radio-telescope control system project
- * Authors: Zach Martin, Aaron Olsen, Loc pham
+ * Authors: Zach Martin & Aaron Olsen
  * Date: 3/9/2023
 */
 

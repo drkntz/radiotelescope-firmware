@@ -1,10 +1,10 @@
 /* main.c
  * Main file for radio-telescope control system project
- * Authors: Zach Martin, Aaron Olsen, Loc pham
+ * Authors: Zach Martin & Aaron Olsen
  * Date: 3/9/2023
  * 
  * TODO: 
- *  * diagnostics via diags button and some kind of passcode ('q' 3 times over usb?)
+ *  * init diags via some kind of passcode ('q' 3 times over usb?)
 */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -21,13 +21,16 @@ void welcome_message(void);
 // Main program. Configure everything and update states in an endless loop.
 int main(void)
 {
+    bool diags;
+    
     SYSTEM_Initialize();
     
+    diags = !DIAGS_GetValue();
     welcome_message();
     delay_ms(2000); // Allow the message to display
         
     // Run diagnostic if button is pressed
-    if(!DIAGS_GetValue()) diagnostic_main(); 
+    if(diags) diagnostic_main(); 
     
     // Initialize timestamp for blinking LED
     uint16_t led_time = timestamp_raw();

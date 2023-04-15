@@ -1,6 +1,6 @@
 /* adc1.c
  * ADC driver for Pic24. This replaces the MCC one that did not work
- * Authors: Zach Martin, Aaron Olsen, Loc pham
+ * Authors: Zach Martin & Aaron Olsen
  * Date: 3/23/2023
  * 
  * with Vref = 4.096V, we get 4.096/2^12 = 1mV per ADC step

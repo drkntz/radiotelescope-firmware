@@ -1,6 +1,6 @@
 /* diagnostic.c
  * Test functions for radio-telescope board
- * Authors: Zach Martin, Aaron Olsen, Loc pham
+ * Authors: Zach Martin & Aaron Olsen
  * Date: 3/22/2023
  * 
  * 
@@ -335,7 +335,7 @@ void encoder_test(void)
         
     printf("\r\nEncoder interrupt test");
     printf("\r\nPulse counts increment with each change of state");
-    printf("\r\nPulses   |   Pin state ");// note hte pin state is not actually from a port read but from the previous state stored in the interrupt callback 
+    printf("\r\nPulses   |   Pin state ");// note the pin state is not actually from a port read but from the previous state stored in the interrupt callback 
     printf("\r\naz1 az2 el1 el2   |  az1 az2 el1 el2\r\n");
     
     while(input != ESC && el1_pulse < 35650)
