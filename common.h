@@ -29,6 +29,81 @@
 #define ESC 27 // this is the escape key in ascii
 char get_char_wait_tag(void);
 char get_char_tag(void);
+void delay_ms(uint16_t ms);
+
+////////////////////////////////////////////////////////////////////////////////
+// Motor states
+
+// These are the motor directions
+typedef enum 
+{
+    MOTOR_STOP, // 0
+    MOTOR_POS,  // 1
+    MOTOR_NEG   // 2
+} motor_dir_t;
+
+// Generic motor states
+// Altitude is between 0 (horizon) and 90 (zenith) typically.
+// Degrees are sent to the main computer in tenths of a degree.
+// IE 0-3600 = 0.0-360.0 degrees.
+struct _Motor
+{
+    uint16_t degrees;   // This is converted from pulses. In tenths of a degree.
+    motor_dir_t dir;    // MOTOR_POS, MOTOR_NEG, or MOTOR_STOP
+    uint16_t current;   // TODO: how are we formatting current?
+    uint32_t pulse1;    // Encoder 1 transition count.
+    uint32_t pulse2;    // Encoder 2 transition count.
+};
+
+// Motor structure with an entry for each axis.
+// Access members of the structure. For example:
+// motor.alt.degrees = (motor.alt.pulse1 + motor.alt.pulse2)/79.222; // TODO: casting needed?
+struct _Motors{
+    struct _Motor alt;
+    struct _Motor az;
+};
+
+extern struct _Motors motor; // Defined in common.c
+
+////////////////////////////////////////////////////////////////////////////////
+// Command state variables, to keep track of input commands
+
+// List of valid commands
+typedef enum 
+{
+    CMD_GOTO,   // GO to position  
+    CMD_STOP,
+            
+    CMD_ALT_POS,    // move in + degrees
+    CMD_ALT_NEG,    // move in - degrees
+    CMD_ALT_STOP,   // stop movement
+    CMD_ALT_RESET,  // reset rotary encoders to 0
+            
+    CMD_AZ_POS,     // move in + degrees
+    CMD_AZ_NEG,     // move az - degrees
+    CMD_AZ_STOP,    // stop movement
+    CMD_AZ_RESET,   // reset rotary encoders to 0
+
+    CMD_REPORT_STATUS,  // Get status of controller
+    CMD_HOME            // GO to 0,0
+}commands_t;
+
+// List of valid command inputs
+typedef enum
+{
+    CMD_SRC_PC,     // From computer over USB
+    CMD_SRC_LOCAL,  // From local pushbuttons/LCD
+    CMD_SRC_DEBUG   // From debug header
+}cmd_src_t;
+
+struct _Command {
+    cmd_src_t source;   // which input is the one we're listening to
+    commands_t command; // what is the current command we're getting
+    uint16_t alt_deg;   // used for GOTO and the like
+    uint16_t az_deg;    // used for GOTO and the like
+};
+
+extern struct _Command command; // used to keep track of incoming commands
 
 #endif	// COMMON_H
 

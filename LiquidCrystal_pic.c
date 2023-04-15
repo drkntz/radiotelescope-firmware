@@ -294,3 +294,92 @@ void _pulseEnable(uint8_t _data){
 	_expanderWrite(_data & ~En);	// En low
 	__delay_us(50);		// commands need > 37us to settle
 } 
+
+////////////////////////////////////////////////////////////////////////////////
+// Functions specific to the project
+
+// Update LCD based on motor status
+// TODO: could use scrolldisplayleft functionality and display a scrolling message
+// to give more flexibility.
+uint8_t refresh_lcd(void)
+{
+    static uint16_t timestamp = 0;
+    
+    // This function runs at 10Hz. TODO: could define rate of calls in main()
+    // instead of in each function and have groups of functions that run at x hz? or would that
+    // create timing issues?. Or we could do this in a macro to keep it clean
+    if(timestamp_to_ms(timestamp_raw() - timestamp) > 100) 
+    {
+        timestamp = timestamp_raw();
+    }
+    else return 0; // return early if it is not time to refresh
+          
+    uint8_t print_op_save = print_output;   // Store current state of printf.
+    print_output = PRINT_LCD;   // Set printf to point to LCD. 
+    lcd_setCursor(0,0);     // Start at the top row
+    
+    /* For now, the top row is system status.
+     * It displays if the device is running OK and which motor direction is 
+     * enabled. Example message: "STAT: PC AZ+ EL-"
+     */
+    printf("STAT:");
+    
+    switch(command.source)
+    {
+        case CMD_SRC_PC:
+            printf(" PC ");
+            break;
+        case CMD_SRC_LOCAL:
+            printf(" LC ");
+            break;
+        case CMD_SRC_DEBUG:
+            printf(" DB ");
+            break;
+        default:
+            printf("ERR "); // TODO
+            break;
+    }
+    printf("AZ");
+    
+    switch(motor.az.dir)
+    {
+        case MOTOR_POS:
+            printf("+");
+            break;
+        case MOTOR_NEG:
+            printf("-");
+            break;
+        default: // aka MOTOR_STOP
+            printf("0");
+            break;
+    }
+    
+    printf(" EL");
+    switch(motor.alt.dir)
+    {
+        case MOTOR_POS:
+            printf("+");
+            break;
+        case MOTOR_NEG:
+            printf("-");
+            break;
+        default: // aka MOTOR_STOP
+            printf("0");
+            break;
+    }
+    
+    
+    lcd_setCursor(0,1);     // Write the bottom row
+    
+    /* The bottom row is the degrees of the motor system.
+     * The message it prints is "AZ 123.4 EL 12.4"
+     * where 123.4 and 12.4 are the azimuth and elevation degrees.
+     * Since the elevation degrees shouldn't go above 90, 
+     * we can more or less assume we won't print outside the LCD boundary.
+     */
+    printf("AZ %3u.%1u EL %2u.%1u", motor.az.degrees/10, motor.az.degrees%10,
+            motor.alt.degrees/10, motor.alt.degrees%10); 
+
+    print_output = print_op_save; // Restore state of printf
+    return 1;
+}

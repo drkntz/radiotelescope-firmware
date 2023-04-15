@@ -80,4 +80,8 @@ void lcd_backlight(void);    // enable backlight
 void lcd_write(char *data, uint8_t len);//char *data, size_t len); // write a character array to lcd
 void lcd_printf_write(char data); // this is used for printf writing to LCD display
 
+////////////////////////////////////////////////////////////////////////////////
+// Function specific to the radiotelescope
+uint8_t refresh_lcd(void);
+
 #endif // LiquidCrystal_PIC_h

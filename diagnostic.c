@@ -303,6 +303,10 @@ void _encoder_test_callback(void)
     nSTAT_LED_Toggle();
 }
 
+// the gear ratios are 575:1 and 62:1 for the planetary gear and the slewing drive
+// so, we get 575*62 = 35650 input rev per output rev. 
+// since the encoders have 4x pulses per input rev each, we know each encoder has 142,600 transistions per output rev
+//
 // test rotary encoder interrupts
 void encoder_test(void)
 {

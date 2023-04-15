@@ -7,24 +7,29 @@
  *  * diagnostics via diags button and some kind of passcode ('q' 3 times over usb?)
 */
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Include other files.
 #include <xc.h>
-#include "common.h"
-#include "mcc_generated_files/uart2.h"
-#include "diagnostic.h"
-#include "mcc_generated_files/uart1.h"
+#include "common.h"     // This contains globals & every other header needed
+#include "diagnostic.h" // For testing hardware & software
 
+////////////////////////////////////////////////////////////////////////////////
+// function prototypes.
 void welcome_message(void);
 
+////////////////////////////////////////////////////////////////////////////////
+// Main program. Configure everything and update states in an endless loop.
 int main(void)
 {
-    // initialize the device
     SYSTEM_Initialize();
     
     welcome_message();
+    delay_ms(2000); // Allow the message to display
+        
+    // Run diagnostic if button is pressed
+    if(!DIAGS_GetValue()) diagnostic_main(); 
     
-    diagnostic_main(); // check pins
-    
+    // Initialize timestamp for blinking LED
     uint16_t led_time = timestamp_raw();
     
     // The superlooop
@@ -40,6 +45,9 @@ int main(void)
          * blink status LEDs
          */
         
+        refresh_lcd(); // Refresh LCD at 10Hz
+        
+        // Blink LED at 4Hz
         if(timestamp_to_ms(timestamp_raw() - led_time) > 250) 
         {
             nSTAT_LED_Toggle(); // "Heartbeat" LED
