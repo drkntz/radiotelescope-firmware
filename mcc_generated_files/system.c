@@ -99,6 +99,7 @@
 #include "adc1.h"
 #include "tmr1.h"
 #include "../LiquidCrystal_pic.h"
+#include "../common.h"
 
 void SYSTEM_Initialize(void)
 {
@@ -118,6 +119,10 @@ void SYSTEM_Initialize(void)
     AZ_CONTROL2_SetLow();
     EL_CONTROL1_SetLow();
     EL_CONTROL2_SetLow();
+    
+    motor.alt.dir = MOTOR_STOP;
+    motor.az.dir = MOTOR_STOP;
+    command.command = CMD_STOP;
     
     INTERRUPT_GlobalEnable(); 
     

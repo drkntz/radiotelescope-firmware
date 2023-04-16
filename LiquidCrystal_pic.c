@@ -305,10 +305,10 @@ uint8_t refresh_lcd(void)
 {
     static uint16_t timestamp = 0;
     
-    // This function runs at 10Hz. TODO: could define rate of calls in main()
+    // This function runs at 2Hz. TODO: could define rate of calls in main()
     // instead of in each function and have groups of functions that run at x hz? or would that
     // create timing issues?. Or we could do this in a macro to keep it clean
-    if(timestamp_to_ms(timestamp_raw() - timestamp) > 100) 
+    if(timestamp_to_ms(timestamp_raw() - timestamp) > 500) 
     {
         timestamp = timestamp_raw();
     }

@@ -51,6 +51,7 @@
 #include <xc.h>
 #include <stdio.h>
 #include "pin_manager.h"
+#include "../common.h"
 
 /**
  Section: File specific functions
@@ -118,9 +119,81 @@ void PIN_MANAGER_Initialize (void)
     IEC1bits.CNIE = 1; //Enable CNI interrupt
 }
 
+// Local variables to keep track of change in encoder pin state
+static bool az1_encoder_state = false;
+static bool az2_encoder_state = false;
+static bool el1_encoder_state = false;
+static bool el2_encoder_state = false;
+
+// This is the default callback for pin changes.
+// This runs when the encoder has changed
+// TODO: what happens when encoders drift? we might end up accidentally 
+// incrementing the encoder count because default is to increment. 
+// TODO: we should stick with one thing, either alt/az or el/az, not swap between
+// the two names. 
 void __attribute__ ((weak)) CN_CallBack(void)
 {
-
+    // Check which pin has changed state and increment the pulse counter
+    
+    bool temp = AZ_ENCODER1_GetValue(); 
+    
+    if(az1_encoder_state != temp)
+    {
+        az1_encoder_state = temp;
+        if(motor.az.dir == MOTOR_NEG)
+        {
+            motor.az.pulse1 --;
+        }
+        else
+        {
+            motor.az.pulse1 ++;
+        }
+    }
+    
+    temp = AZ_ENCODER2_GetValue(); 
+    
+    if(az2_encoder_state != temp)
+    {
+        az2_encoder_state = temp;
+        if(motor.az.dir == MOTOR_NEG)
+        {
+            motor.az.pulse2 --;
+        }
+        else
+        {
+            motor.az.pulse2 ++;
+        }
+    }
+    
+    temp = EL_ENCODER1_GetValue(); 
+    
+    if(el1_encoder_state != temp)
+    {
+        el1_encoder_state = temp;
+        if(motor.alt.dir == MOTOR_NEG)
+        {
+            motor.alt.pulse1 --;
+        }
+        else
+        {
+            motor.alt.pulse1 ++;
+        }
+    }
+    
+    temp = EL_ENCODER2_GetValue(); 
+    
+    if(el2_encoder_state != temp)
+    {
+        el2_encoder_state = temp;
+        if(motor.alt.dir == MOTOR_NEG)
+        {
+            motor.alt.pulse2 --;
+        }
+        else
+        {
+            motor.alt.pulse2 ++;
+        }
+    }
 }
 
 void CN_SetInterruptHandler(void (* InterruptHandler)(void))

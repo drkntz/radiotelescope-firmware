@@ -10,12 +10,13 @@
 ////////////////////////////////////////////////////////////////////////////////
 // Include other files.
 #include <xc.h>
-#include "common.h"     // This contains globals & every other header needed
-#include "diagnostic.h" // For testing hardware & software
+#include "common.h"     // This contains globals & every other header needed.
+#include "diagnostic.h" // For testing hardware & software.
 
 ////////////////////////////////////////////////////////////////////////////////
 // function prototypes.
 void welcome_message(void);
+void convert_angles(void);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main program. Configure everything and update states in an endless loop.
@@ -26,8 +27,9 @@ int main(void)
     SYSTEM_Initialize();
     
     diags = !DIAGS_GetValue();
+    
     welcome_message();
-    delay_ms(2000); // Allow the message to display
+    delay_ms(2000);     // Allow the message to display
         
     // Run diagnostic if button is pressed
     if(diags) diagnostic_main(); 
@@ -41,14 +43,16 @@ int main(void)
         /* From notes: this is the superloop
          * read PC commands
          * read buttons
-         * update rotary encoders
+         * update rotary encoders               done
          * update motors
          * send status at 3Hz (check notes)
-         * refresh LCD
-         * blink status LEDs
+         * refresh LCD                          done
+         * blink status LEDs                    done
          */
         
-        refresh_lcd(); // Refresh LCD at 10Hz
+        convert_angles(); // Convert rotary encoder pulses to angles
+        
+        refresh_lcd(); // Refresh LCD at 2Hz
         
         // Blink LED at 4Hz
         if(timestamp_to_ms(timestamp_raw() - led_time) > 250) 
@@ -57,7 +61,6 @@ int main(void)
             led_time = timestamp_raw();
         }
         
-        //printf("\r\nstamp = %u", timestamp_ms());
         ClrWdt();
     }
 
@@ -77,4 +80,16 @@ void welcome_message(void)
     lcd_setCursor(0,1);
     printf("Control System");
     print_output = PRINT_TAG;
+}
+
+// convert rotary encoder pulses to angles
+void convert_angles(void)
+{
+    // Store angles, in tenths of a degree.
+    // If we add up the pulses from both encoders and convert from the gear ratio,
+    // we get 792.222 pulses per degree output. 
+    // TODO: test this thoroughly. Pulses are stored in uint32_t, so we should
+    // make sure the math is done correctly. 
+    motor.az.degrees = (motor.az.pulse1 + motor.az.pulse2)/79.22;
+    motor.alt.degrees = (motor.alt.pulse1 + motor.alt.pulse2)/79.22;
 }

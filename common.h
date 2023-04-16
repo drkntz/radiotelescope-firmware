@@ -57,7 +57,7 @@ struct _Motor
 
 // Motor structure with an entry for each axis.
 // Access members of the structure. For example:
-// motor.alt.degrees = (motor.alt.pulse1 + motor.alt.pulse2)/79.222; // TODO: casting needed?
+// motor.alt.degrees = (motor.alt.pulse1 + motor.alt.pulse2)/79.222;
 struct _Motors{
     struct _Motor alt;
     struct _Motor az;
