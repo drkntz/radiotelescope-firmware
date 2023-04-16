@@ -20,6 +20,7 @@
 commands_t check_pc_commands(void)
 {
     static uint8_t bytenum = 0; // keep track of number of rx'd bytes
+    static uint8_t state; 
     
     static char frame [MAX_FRAME_SIZE] = {0x00};
     

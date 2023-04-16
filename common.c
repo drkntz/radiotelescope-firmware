@@ -17,16 +17,11 @@ struct _Command command; // used to keep track of incoming commands
 // wait until we get a character from tag connect
 char get_char_wait_tag(void)
 {
-    uint8_t timeout = 100;
     while(!UART2_IsRxReady() && timeout)
     {
         ClrWdt();
-        timeout --;
-        __delay_ms(1);
     }
-    if(timeout)
-        return UART2_Read();
-    return -1;
+    return UART2_Read();
 }
 
 // do not wait, get char if available
@@ -40,16 +35,11 @@ char get_char_tag(void)
 // wait until we get a character from usb-uart
 char get_char_wait_usb(void)
 {
-    uint8_t timeout = 100;
     while(!UART1_IsRxReady() && timeout)
     {
         ClrWdt();
-        timeout --;
-        __delay_ms(1);
     }
-    if(timeout)
-        return UART1_Read();
-    return -1;
+    return UART1_Read();
 }
 
 // do not wait, get char if available
