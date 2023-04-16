@@ -29,6 +29,8 @@
 #define ESC 27 // this is the escape key in ascii
 char get_char_wait_tag(void);
 char get_char_tag(void);
+char get_char_usb(void);
+char get_char_wait_usb(void);
 void delay_ms(uint16_t ms);
 
 ////////////////////////////////////////////////////////////////////////////////
