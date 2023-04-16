@@ -9,7 +9,7 @@
 #include "common.h"
 
 #define MAX_FRAME_SIZE 7    // Max 7 bytes: CMD CMD ALT ALT AZ AZ EOT
-#define EOT 0x04            
+#define EOT 0x04            // ASCII EOT character
 
 /* Check for incoming commands over USB-UART.
  * Rough outline of protocol is given in:
@@ -21,7 +21,7 @@ commands_t check_pc_commands(void)
 {
     static uint8_t bytenum = 0; // keep track of number of rx'd bytes
     
-    char frame [MAX_FRAME_SIZE] = {0x00};
+    static char frame [MAX_FRAME_SIZE] = {0x00};
     
     // Put the command into the frame buffer
     while(UART1_IsRxReady())
