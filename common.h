@@ -25,6 +25,7 @@
 #include "LiquidCrystal_pic.h"
 #include "mcc_generated_files/tmr1.h"
 
+
 // TODO: put program constants here
 #define ESC 27 // this is the escape key in ascii
 char get_char_wait_tag(void);
@@ -109,6 +110,8 @@ struct _Command {
 };
 
 extern struct _Command command; // used to keep track of incoming commands
+
+#include "protocol.h"
 
 #endif	// COMMON_H
 

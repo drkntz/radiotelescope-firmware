@@ -13,5 +13,6 @@
 
 commands_t check_pc_commands(void); // check for new commands from UART and put them into command struct
 
+
 #endif	// PROTOCOL_H
 
