@@ -34,27 +34,25 @@ uint16_t _bytes_to_uint16(uint8_t hibyte, uint8_t lowbyte);
  */
 commands_t check_pc_commands(void)
 {
-    static uint8_t bytenum = 0; // keep track of number of rx'd bytes
     static char prev_byte, new_byte;
-    commands_t new_command;
-    uint16_t new_alt_deg, new_az_deg;
+    static uint16_t new_alt_deg, new_az_deg;
+    static commands_t new_command; 
+    static pc_state_t state = PC_WAITING; 
+    commands_t junk_command;
     
-    static pc_state_t state; 
-    
-    static char frame [MAX_FRAME_SIZE] = {0x00};
-    
-    // Put the command into the frame buffer
+    // Get new characters, if available
     while(UART1_IsRxReady())
     {
-        prev_byte = new_byte;
-        new_byte = UART1_Read(); // read one byte
+        prev_byte = new_byte;       // Both degrees and commands are given in two-byte values.
+        new_byte = UART1_Read();    // Read newest byte.
         
         switch(state)
         {
             case PC_WAITING:
-                if(_is_command(prev_byte, new_byte) != CMD_NONE) // valid command rx'd!
+                junk_command = _is_command(prev_byte, new_byte);
+                if(junk_command != CMD_NONE) // valid command rx'd!
                 {
-                    new_command = _is_command(prev_byte, new_byte);
+                    new_command = junk_command;
                     state = PC_ALT_H;
                 }
                 break;
@@ -82,21 +80,12 @@ commands_t check_pc_commands(void)
                     state = PC_WAITING;
                     return new_command; // DONE!!!
                 }
-                else // assume that we got some data corruption
+                else // assume that we got some data corruption, for now just throw out the whole frame. TODO
                 {
                     state = PC_WAITING;
                 }
                 break;
-        }
-
-        
-        frame[bytenum] = UART1_Read(); // Read one byte
-        if(frame[bytenum] == EOT)
-        {
-            bytenum = 0; // reset frame
-        }
-        bytenum ++; // move to next byte
-            
+        }            
     }    
     return CMD_NONE; // no data was rx'd
 }
