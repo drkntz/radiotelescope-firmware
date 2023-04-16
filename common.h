@@ -71,8 +71,8 @@ extern struct _Motors motor; // Defined in common.c
 // List of valid commands
 typedef enum 
 {
-    CMD_GOTO,   // GO to position  
     CMD_STOP,
+    CMD_GOTO,   // GO to position  
             
     CMD_ALT_POS,    // move in + degrees
     CMD_ALT_NEG,    // move in - degrees
@@ -85,12 +85,15 @@ typedef enum
     CMD_AZ_RESET,   // reset rotary encoders to 0
 
     CMD_REPORT_STATUS,  // Get status of controller
-    CMD_HOME            // GO to 0,0
+    CMD_HOME,            // GO to 0,0
+            
+    CMD_NONE
 }commands_t;
 
 // List of valid command inputs
 typedef enum
 {
+    CMD_SRC_NONE,   // disconnected
     CMD_SRC_PC,     // From computer over USB
     CMD_SRC_LOCAL,  // From local pushbuttons/LCD
     CMD_SRC_DEBUG   // From debug header
