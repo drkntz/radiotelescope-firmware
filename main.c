@@ -62,10 +62,8 @@ int main(void)
          */
         
         // Update to previous motor directions
-        prev_alt_dir = motor.alt.dir;
-        prev_az_dir = motor.az.dir;
         
-        printf("\r Alt_Dir %x - Az_Dir %x - Alt_Deg %u - Az_Deg %u       ", motor.alt.dir, motor.az.dir, motor.alt.degrees, motor.az.degrees);
+        printf("\r Alt_Dir %x - Az_Dir %x - Alt_Deg %u - Az_Deg %u - Command   %u   ", motor.alt.dir, motor.az.dir, motor.alt.degrees, motor.az.degrees, command.command);
         
         // Temporary read PC commands (this will be changed to interact with other code)
         read_pc_commands_temp();
@@ -79,7 +77,7 @@ int main(void)
         process_command();
         
         // Determine if motor update is necessary
-        if ((motor.alt.dir != prev_alt_dir) || (motor.az.dir != prev_az_dir))
+        if (!((motor.alt.dir == prev_alt_dir) && (motor.az.dir == prev_az_dir)))
         {
             update_motors();  // update motor directions
         }
@@ -92,6 +90,7 @@ int main(void)
             nSTAT_LED_Toggle(); // "Heartbeat" LED
             led_time = timestamp_raw();
         }
+        
         
         ClrWdt();
     }
@@ -138,6 +137,7 @@ char input;
 void read_pc_commands_temp(void)
 {
     input = get_char_usb(); // get PC input
+    command.source = CMD_SRC_PC;
     switch(input)
     {
         case -1: // standard for no input
@@ -260,25 +260,19 @@ void process_command(void)
     // CMD_ALT_STOP
     if (command.command == CMD_ALT_STOP)
     {
+        EL_CONTROL1_SetLow();
+        EL_CONTROL2_SetLow();
         motor.alt.dir = MOTOR_STOP;
     }
     // CMD_ALT_POS - up
     else if (command.command == CMD_ALT_POS)
     {
         motor.alt.dir = MOTOR_POS;
-        if (motor.alt.degrees > 1800)
-        {
-            motor.alt.dir = MOTOR_STOP; // stop it from rotating more than 180 degrees
-        }
     }
     // CMD_ALT_NEG - down
     else if (command.command == CMD_ALT_NEG)
     {
         motor.alt.dir = MOTOR_NEG;
-        if (motor.alt.degrees < 1)
-        {
-            motor.alt.dir = MOTOR_STOP; // stop it from rotating less than 0 degrees
-        }
     }
     // CMD_ALT_RESET - reset alt encoders to zero
     else if (command.command == CMD_ALT_RESET)
@@ -291,25 +285,19 @@ void process_command(void)
     // CMD_AZ_STOP
     if (command.command == CMD_AZ_STOP)
     {
+        AZ_CONTROL1_SetLow();
+        AZ_CONTROL2_SetLow();
         motor.az.dir = MOTOR_STOP;
     }
     // CMD_AZ_POS - Clockwise
     else if (command.command == CMD_AZ_POS)
     {
         motor.az.dir = MOTOR_POS;
-        if (motor.az.degrees > 1800)
-        {
-            motor.az.dir = MOTOR_STOP; // stop motor from rotating greater than 180 degrees
-        }
     }
     // CMD_AZ_NEG - Counter-Clockwise
     else if (command.command == CMD_AZ_NEG)
     {
         motor.az.dir = MOTOR_NEG;
-        if (motor.az.degrees < 1)
-        {
-            motor.az.dir = MOTOR_STOP; // stop motor from rotating less than 0 degrees
-        }
     }
     // CMD_AZ_RESET - reset az encoders to zero
     else if (command.command == CMD_AZ_RESET)
@@ -327,11 +315,15 @@ void update_motors(void)
     {
         AZ_CONTROL1_SetLow();
         AZ_CONTROL2_SetLow();
+        printf("alt stop");
+        motor.alt.dir = MOTOR_STOP;
     }
     if (motor.az.dir == MOTOR_STOP)
     {
         EL_CONTROL1_SetLow();
         EL_CONTROL2_SetLow();
+        printf("az stop");
+        motor.az.dir = MOTOR_STOP;
     }
     
     // Altitude
@@ -361,4 +353,7 @@ void update_motors(void)
         __delay_ms(600);    // 600 ms is the motor turnoff time -- change this later to not delay whole program (use timer1)
         AZ_CONTROL2_SetHigh();
     }
+    
+    prev_alt_dir = motor.alt.dir;
+    prev_az_dir = motor.az.dir;
 }
