@@ -17,7 +17,7 @@ struct _Command command; // used to keep track of incoming commands
 // wait until we get a character from tag connect
 char get_char_wait_tag(void)
 {
-    while(!UART2_IsRxReady() && timeout)
+    while(!UART2_IsRxReady())
     {
         ClrWdt();
     }
@@ -35,7 +35,7 @@ char get_char_tag(void)
 // wait until we get a character from usb-uart
 char get_char_wait_usb(void)
 {
-    while(!UART1_IsRxReady() && timeout)
+    while(!UART1_IsRxReady())
     {
         ClrWdt();
     }

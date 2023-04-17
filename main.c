@@ -19,6 +19,11 @@ void welcome_message(void);
 void convert_angles(void);
 void process_command(void);
 void update_motors(void);
+void print_usb_option_screen(void);
+void read_pc_commands_temp(void);
+
+motor_dir_t prev_alt_dir = MOTOR_STOP; // To use in the main loop (determine if update is necessary)
+motor_dir_t prev_az_dir = MOTOR_STOP;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main program. Configure everything and update states in an endless loop.
@@ -39,6 +44,9 @@ int main(void)
     // Initialize timestamp for blinking LED
     uint16_t led_time = timestamp_raw();
     
+    // Print the USB Option Menu
+    print_usb_option_screen();
+    
     // The superlooop
     while (1)
     {           
@@ -53,12 +61,28 @@ int main(void)
          * blink status LEDs                    done
          */
         
+        // Update to previous motor directions
+        prev_alt_dir = motor.alt.dir;
+        prev_az_dir = motor.az.dir;
+        
+        printf("\r Alt_Dir %x - Az_Dir %x - Alt_Deg %u - Az_Deg %u       ", motor.alt.dir, motor.az.dir, motor.alt.degrees, motor.az.degrees);
+        
+        // Temporary read PC commands (this will be changed to interact with other code)
+        read_pc_commands_temp();
+        
+        // Read buttons
+        
+        
+        
         convert_angles(); // Convert rotary encoder pulses to angles
         
         process_command();
         
-        //if ((motor.alt.dir != prev_alt_dir) || (motor.az.dir != prev_az_dir))
-        update_motors();  // update motor directions
+        // Determine if motor update is necessary
+        if ((motor.alt.dir != prev_alt_dir) || (motor.az.dir != prev_az_dir))
+        {
+            update_motors();  // update motor directions
+        }
         
         refresh_lcd(); // Refresh LCD at 2Hz
         
@@ -78,7 +102,7 @@ int main(void)
 
 void welcome_message(void)
 {
-    print_output = PRINT_TAG;
+    print_output = PRINT_USB;
     printf("\r\nRadio Telescope Control System Begin\r\n");
     
     lcd_setCursor(0,0);
@@ -87,8 +111,73 @@ void welcome_message(void)
     printf("Radio Telescope");
     lcd_setCursor(0,1);
     printf("Control System");
-    print_output = PRINT_TAG;
+    print_output = PRINT_USB;
 }
+
+void print_usb_option_screen(void) // UART1 options screen
+{
+    uint8_t print_op_save = print_output;   // Store current state of printf.
+    print_output = PRINT_USB;
+    printf("\r\n\nRadio Telescope Option Menu\r\nOptions:");
+    printf( "\r\n1 - Stop Motors (CMD_STOP)"
+            "\r\n2 - Altitude Up (CMD_ALT_POS)"
+            "\r\n3 - Altitude Down (CMD_ALT_NEG)"
+            "\r\n4 - Altitude Stop Motor (CMD_ALT_STOP)"
+            "\r\n5 - Set Altitude Encoder to Zero Point (CMD_ALT_RESET)"
+            "\r\n6 - Azimuth Clockwise (CMD_AZ_POS)"
+            "\r\n7 - Azimuth Counter-Clockwise (CMD_AZ_NEG)"
+            "\r\n8 - Azimuth Stop Motor (CMD_AZ_STOP)"
+            "\r\n9 - Set Azimuth Encoder to Zero Point (CMD_AZ_RESET)"
+            "\r\n0 - Take Motors to Home (0,0) Point (CMD_HOME)"
+            "\r\nEnter option: ");
+    print_output = print_op_save; // Restore state of printf
+}
+
+char input;
+
+void read_pc_commands_temp(void)
+{
+    input = get_char_usb(); // get PC input
+    switch(input)
+    {
+        case -1: // standard for no input
+            break;
+        case '1': // stop both motors
+            command.command = CMD_STOP; 
+            break;
+        case '2': // altitude move up
+            command.command = CMD_ALT_POS;
+            break;
+        case '3': // altitude move down
+            command.command = CMD_ALT_NEG;
+            break;
+        case '4': // altitude motor stop
+            command.command = CMD_ALT_STOP;
+            break;
+        case '5': // reset altitude encoders to zero
+            command.command = CMD_ALT_RESET;
+            break;
+        case '6': // azimuth clockwise
+            command.command = CMD_AZ_POS;
+            break;
+        case '7': // azimuth counter-clockwise
+            command.command = CMD_AZ_NEG;
+            break;
+        case '8': // stop azimuth motor
+            command.command = CMD_AZ_STOP;
+            break;
+        case '9': // reset azimuth encoders to zero
+            command.command = CMD_AZ_RESET;
+            break;
+        case '0': // take the motors to home (0,0)
+            command.command = CMD_HOME;
+            break;
+        default:
+            command.command = CMD_STOP;
+            break;
+    }
+}
+
 
 // convert rotary encoder pulses to angles
 void convert_angles(void)
@@ -177,11 +266,19 @@ void process_command(void)
     else if (command.command == CMD_ALT_POS)
     {
         motor.alt.dir = MOTOR_POS;
+        if (motor.alt.degrees > 1800)
+        {
+            motor.alt.dir = MOTOR_STOP; // stop it from rotating more than 180 degrees
+        }
     }
     // CMD_ALT_NEG - down
     else if (command.command == CMD_ALT_NEG)
     {
         motor.alt.dir = MOTOR_NEG;
+        if (motor.alt.degrees < 1)
+        {
+            motor.alt.dir = MOTOR_STOP; // stop it from rotating less than 0 degrees
+        }
     }
     // CMD_ALT_RESET - reset alt encoders to zero
     else if (command.command == CMD_ALT_RESET)
@@ -200,11 +297,19 @@ void process_command(void)
     else if (command.command == CMD_AZ_POS)
     {
         motor.az.dir = MOTOR_POS;
+        if (motor.az.degrees > 1800)
+        {
+            motor.az.dir = MOTOR_STOP; // stop motor from rotating greater than 180 degrees
+        }
     }
     // CMD_AZ_NEG - Counter-Clockwise
     else if (command.command == CMD_AZ_NEG)
     {
         motor.az.dir = MOTOR_NEG;
+        if (motor.az.degrees < 1)
+        {
+            motor.az.dir = MOTOR_STOP; // stop motor from rotating less than 0 degrees
+        }
     }
     // CMD_AZ_RESET - reset az encoders to zero
     else if (command.command == CMD_AZ_RESET)
