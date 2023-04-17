@@ -18,6 +18,8 @@ void hbridge_test(void); // test hbridge
 void hbridge_square_wave(void); // test hbridge
 void encoder_test(void); // test rotary encoders
 void lcd_test(void);
+void check_pc_commands_test(void); // test receiving PC commands
+
 //void timer_test(void); // test interval with tmr1
 
 // helper for encoder_test()
@@ -416,3 +418,33 @@ void lcd_test(void)
 //        //input = get_char_tag(); // get input from debug
 //    }while(input == -1);
 //}
+
+
+void check_pc_commands_test(void)
+{
+    commands_t old_command = command.command;
+    uint16_t old_az_deg = command.az_deg;
+    uint16_t old_alt_deg = command.alt_deg;
+    cmd_src_t old_cmd_src = command.source;
+    
+    char input = -1;
+    printf("\r\nRead commands from PC python program");
+    printf("\r\nCommand  alt_deg  az_deg  source");
+    
+    while(input != ESC)
+    {
+        input = get_char_tag();
+        printf("\r %u, %u, %u %u", command.command, command.alt_deg,
+                command.az_deg, command.source);
+        check_pc_commands();
+        ClrWdt();
+        __delay_ms(100);
+    }
+    
+    
+    // reset command to the way it used to be
+    command.command = old_command;
+    command.alt_deg = old_alt_deg;
+    command.az_deg = old_az_deg;
+    command.source = old_cmd_src;
+}
