@@ -13,6 +13,8 @@ struct _Motors motor;
 
 struct _Command command; // used to keep track of incoming commands
 
+uint8_t local_menu_state = 0;
+
 
 // wait until we get a character from tag connect
 char get_char_wait_tag(void)

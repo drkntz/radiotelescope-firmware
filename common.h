@@ -111,6 +111,8 @@ struct _Command {
 
 extern struct _Command command; // used to keep track of incoming commands
 
+extern uint8_t local_menu_state;
+
 #include "protocol.h"
 
 #endif	// COMMON_H

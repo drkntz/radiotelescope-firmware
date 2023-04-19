@@ -33,6 +33,7 @@ void _encoder_test_callback(void);
 // Top level menu
 void diagnostic_main(void)
 {
+    print_output = PRINT_TAG;
     char input;
     
     while(1)

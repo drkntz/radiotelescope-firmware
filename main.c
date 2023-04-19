@@ -26,6 +26,11 @@ void read_buttons(void);
 motor_dir_t prev_alt_dir = MOTOR_STOP; // To use in the main loop (determine if update is necessary)
 motor_dir_t prev_az_dir = MOTOR_STOP;
 
+// Variable declarations for read_buttons()
+uint16_t button_time = 0;
+uint16_t button_delay = 250;
+bool button_time_check = 0;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Main program. Configure everything and update states in an endless loop.
 int main(void)
@@ -67,7 +72,7 @@ int main(void)
         
         // Update to previous motor directions
         
-        printf("\r Alt_Dir %x - Az_Dir %x - Alt_Deg %u - Az_Deg %u - Command   %u   ", motor.alt.dir, motor.az.dir, motor.alt.degrees, motor.az.degrees, command.command);
+        printf("\rAlt_Dir %x - Az_Dir %x - Alt_Deg %u - Az_Deg %u - Command   %u   ", motor.alt.dir, motor.az.dir, motor.alt.degrees, motor.az.degrees, command.command);
         
         // Temporary read PC commands (this will be changed to interact with other code)
         read_pc_commands_temp();
@@ -133,16 +138,12 @@ void print_usb_option_screen(void) // UART1 options screen
             "\r\n8 - Azimuth Stop Motor (CMD_AZ_STOP)"
             "\r\n9 - Set Azimuth Encoder to Zero Point (CMD_AZ_RESET)"
             "\r\n0 - Take Motors to Home (0,0) Point (CMD_HOME)"
+            "\r\nESC - Reprint the menu"
             "\r\nEnter option: ");
     print_output = print_op_save; // Restore state of printf
 }
 
 /////////////
-// Variable declarations for read_buttons()
-uint16_t button_time = 0;
-uint16_t button_delay = 250;
-uint16_t local_menu_state = 0;
-bool button_time_check = 0;
 
 // Button 1 is left button
 // Button 2 is center (mode) button
@@ -165,9 +166,14 @@ void read_buttons(void)
     button_time_check = (timestamp_to_ms(timestamp_raw() - button_time) > button_delay);
     
     // Check for menu increment (mode button)
-    if (!BUTTON2_GetValue && button_time_check)
+    if (!BUTTON2_GetValue() && button_time_check && (command.source == CMD_SRC_LOCAL))
     {
         local_menu_state += 1;
+        if (local_menu_state == 5)
+        {
+            local_menu_state = 1;
+        }
+        button_time = timestamp_raw();
     }
     
     // Operate in menu
@@ -176,35 +182,57 @@ void read_buttons(void)
         case 0:
             break;
         case 1: // Azimuth Motor Control
-            if (!BUTTON1_GetValue && button_time_check) // CCW
+            if (!BUTTON1_GetValue() && button_time_check) // CCW
             {
                 command.command = CMD_AZ_NEG;
+                button_time = timestamp_raw();
             }
-            else if (!BUTTON3_GetValue && button_time_check) // CW
+            else if (!BUTTON3_GetValue() && button_time_check) // CW
             {
                 command.command = CMD_AZ_POS;
+                button_time = timestamp_raw();
             }
-            else if (BUTTON1_GetValue() && BUTTON3_GetValue()) // Off
+            else if (BUTTON1_GetValue() && BUTTON3_GetValue()) // Stop motor
             {
                 command.command = CMD_AZ_STOP;
+                button_time = timestamp_raw();
             }
+            break;
         case 2: // Altitude Motor Control
-            if (!BUTTON1_GetValue && button_time_check) // Down
+            if (!BUTTON1_GetValue() && button_time_check) // Down
             {
                 command.command = CMD_ALT_NEG;
+                button_time = timestamp_raw();
             }
-            else if (!BUTTON3_GetValue && button_time_check) // Up
+            else if (!BUTTON3_GetValue() && button_time_check) // Up
             {
                 command.command = CMD_ALT_POS;
+                button_time = timestamp_raw();
             }
-            else if (BUTTON1_GetValue() && BUTTON3_GetValue()) // Off
+            else if (BUTTON1_GetValue() && BUTTON3_GetValue()) // Stop motor
             {
                 command.command = CMD_ALT_STOP;
+                button_time = timestamp_raw();
             }
-        case 3: // Az - Zero - Alt ///// This menu will zero az if left button clicked or zero alt if right button clicked
-            
+            break;
+        case 3: // Az - Zero - El ///// This menu will zero az if left button clicked or zero alt(el) if right button clicked
+            if (!BUTTON1_GetValue() && button_time_check) // zero the azimuth
+            {
+                motor.az.degrees = 0;
+                button_time = timestamp_raw();
+            }
+            else if (!BUTTON3_GetValue() && button_time_check) // zero the altitude
+            {
+                motor.alt.degrees = 0;
+                button_time = timestamp_raw();
+            }
+            break;
         case 4: // Quit
-            
+            if (!BUTTON3_GetValue() && button_time)
+            {
+                command.source = CMD_SRC_PC;
+            }
+            break;
     }
     
     
@@ -257,6 +285,8 @@ void read_pc_commands_temp(void)
             case '0': // take the motors to home (0,0)
                 command.command = CMD_HOME;
                 break;
+            case ESC:
+                print_usb_option_screen();
             // need a case later to restart the program
             default:
                 command.command = CMD_STOP;
