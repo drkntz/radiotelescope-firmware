@@ -63,7 +63,10 @@ int main(void)
         
         // Update to previous motor directions
         
-        printf("\r Alt_Dir %x - Az_Dir %x - Alt_Deg %u - Az_Deg %u - Command   %u   ", motor.alt.dir, motor.az.dir, motor.alt.degrees, motor.az.degrees, command.command);
+        printf("\r Alt_Dir %x - Az_Dir %x - Alt_Deg %3u.%01u - Az_Deg %3u.%01u - Command   %u   ",
+                motor.alt.dir, motor.az.dir, motor.alt.degrees/10,
+                motor.alt.degrees%10, motor.az.degrees/10, motor.az.degrees%10,
+                command.command);
         
         // Temporary read PC commands (this will be changed to interact with other code)
         read_pc_commands_temp();
@@ -315,14 +318,12 @@ void update_motors(void)
     {
         AZ_CONTROL1_SetLow();
         AZ_CONTROL2_SetLow();
-        printf("alt stop");
         motor.alt.dir = MOTOR_STOP;
     }
     if (motor.az.dir == MOTOR_STOP)
     {
         EL_CONTROL1_SetLow();
         EL_CONTROL2_SetLow();
-        printf("az stop");
         motor.az.dir = MOTOR_STOP;
     }
     

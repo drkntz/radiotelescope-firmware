@@ -130,6 +130,7 @@ void SYSTEM_Initialize(void)
     lcd_init();
     lcd_backlight();
     lcd_clear();
+    CNPU2bits.CN26PUE = 1; // DIAGS is weak pull up
 }
 
 /**
