@@ -75,9 +75,9 @@ int main(void)
         
         // Update to previous motor directions
         
-        printf("\r Alt_Dir %x - Az_Dir %x - Alt_Deg %3u.%01u - Az_Deg %3u.%01u - Command   %u",
+        printf("\r Alt_Dir %x - Az_Dir %x - Alt_Deg %3d.%01u - Az_Deg %3d.%01u - Command   %u",
                 motor.alt.dir, motor.az.dir, motor.alt.degrees/10,
-                motor.alt.degrees%10, motor.az.degrees/10, motor.az.degrees%10,
+                abs(motor.alt.degrees%10), motor.az.degrees/10, abs(motor.az.degrees%10),
                 command.command);
         
         // Temporary read PC commands (this will be changed to interact with other code)
@@ -175,6 +175,7 @@ void read_buttons(void)
     {
         b2 = true;
         b2_time = raw_time;
+        command.command = CMD_STOP; // This fixes the bug where motor command is retained after switching to local control override
     }
     b2_prev = BUTTON2_GetValue();
     
@@ -315,8 +316,7 @@ void convert_angles(void)
     // Store angles, in tenths of a degree.
     // If we add up the pulses from both encoders and convert from the gear ratio,
     // we get 792.222 pulses per degree output. 
-    // TODO: test this thoroughly. Pulses are stored in uint32_t, so we should
-    // make sure the math is done correctly. 
+    // 4/19/23 - Changed values to signed to deal with zero crossing - ZM
     motor.az.degrees = (motor.az.pulse1 + motor.az.pulse2)/79.22;
     motor.alt.degrees = (motor.alt.pulse1 + motor.alt.pulse2)/79.22;
 }

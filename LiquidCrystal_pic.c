@@ -372,8 +372,8 @@ uint8_t refresh_lcd(void)
              * Since the elevation degrees shouldn't go above 90, 
              * we can more or less assume we won't print outside the LCD boundary.
              */
-            printf("AZ %3u.%1u EL %2u.%1u", motor.az.degrees/10, motor.az.degrees%10,
-                    motor.alt.degrees/10, motor.alt.degrees%10); 
+            printf("AZ %3d.%1u EL %2d.%1u", motor.az.degrees/10, abs(motor.az.degrees%10),
+                    motor.alt.degrees/10, abs(motor.alt.degrees%10)); 
             break;
             //////////////////////////////////////////////////////////////////////////
         case CMD_SRC_LOCAL:
@@ -403,8 +403,8 @@ uint8_t refresh_lcd(void)
              * Since the elevation degrees shouldn't go above 90, 
              * we can more or less assume we won't print outside the LCD boundary.
              */
-            printf("AZ %3u.%1u EL %2u.%1u", motor.az.degrees/10, motor.az.degrees%10,
-                    motor.alt.degrees/10, motor.alt.degrees%10); 
+            printf("AZ %3d.%1d EL %2d.%1d", motor.az.degrees/10, abs(motor.az.degrees%10),
+                    motor.alt.degrees/10, abs(motor.alt.degrees%10)); 
             break;
             //////////////////////////////////////////////////////////////////////////
         case CMD_SRC_DEBUG:
@@ -452,8 +452,8 @@ uint8_t refresh_lcd(void)
              * Since the elevation degrees shouldn't go above 90, 
              * we can more or less assume we won't print outside the LCD boundary.
              */
-            printf("AZ %3u.%1u EL %2u.%1u", motor.az.degrees/10, motor.az.degrees%10,
-                    motor.alt.degrees/10, motor.alt.degrees%10); 
+            printf("AZ %3d.%1u EL %2d.%1u", motor.az.degrees/10, abs(motor.az.degrees%10),
+                    motor.alt.degrees/10, abs(motor.alt.degrees%10)); 
             break;
             //////////////////////////////////////////////////////////////////////////
         default:

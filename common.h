@@ -15,6 +15,7 @@
 #include <xc.h> // include processor files - each processor file is guarded.
 #include <libpic30.h>                   // also for delays and other stuff
 #include <stdio.h>                      // for printf
+#include <stdlib.h>
 #include "mcc_generated_files/clock.h"  // for delay functions
 #include "p24FV32KA304.h"               // not sure if this has to be explicitly included? TODO
 #include "mcc_generated_files/system.h"
@@ -51,11 +52,11 @@ typedef enum
 // IE 0-3600 = 0.0-360.0 degrees.
 struct _Motor
 {
-    uint16_t degrees;   // This is converted from pulses. In tenths of a degree.
+    int16_t degrees;   // This is converted from pulses. In tenths of a degree.
     motor_dir_t dir;    // MOTOR_POS, MOTOR_NEG, or MOTOR_STOP
     uint16_t current;   // TODO: how are we formatting current?
-    uint32_t pulse1;    // Encoder 1 transition count.
-    uint32_t pulse2;    // Encoder 2 transition count.
+    int32_t pulse1;    // Encoder 1 transition count.
+    int32_t pulse2;    // Encoder 2 transition count.
 };
 
 // Motor structure with an entry for each axis.
@@ -105,8 +106,8 @@ typedef enum
 struct _Command {
     cmd_src_t source;   // which input is the one we're listening to
     commands_t command; // what is the current command we're getting
-    uint16_t alt_deg;   // used for GOTO and the like
-    uint16_t az_deg;    // used for GOTO and the like
+    int16_t alt_deg;   // used for GOTO and the like
+    int16_t az_deg;    // used for GOTO and the like
 };
 
 extern struct _Command command; // used to keep track of incoming commands

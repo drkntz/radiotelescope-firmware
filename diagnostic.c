@@ -344,7 +344,7 @@ void encoder_test(void)
     while(input != ESC && el1_pulse < 35650)
     {
         input = get_char_tag();
-        printf("\r%u %u %u %u | %x %x %x %x", az1_pulse, az2_pulse, el1_pulse, el2_pulse, az1, az2, el1, el2);
+        printf("\rd %d %d %d | %x %x %x %x", az1_pulse, az2_pulse, el1_pulse, el2_pulse, az1, az2, el1, el2);
         __delay_ms(100);
         ClrWdt();
     }
@@ -372,7 +372,7 @@ void lcd_test(void)
     print_output = PRINT_LCD;
     
     //lcd_write(msg, 5);
-    printf("This is the bestest project ever created");
+    printf("This is the best project ever created");
     
     for(uint8_t i = 0; i < 50; i++)
     {
@@ -435,7 +435,7 @@ void check_pc_commands_test(void)
     while(input != ESC)
     {
         input = get_char_tag();
-        printf("\r %u, %u, %u %u", command.command, command.alt_deg,
+        printf("\r %u, %u, %d %d", command.command, command.alt_deg,
                 command.az_deg, command.source);
         check_pc_commands();
         ClrWdt();
