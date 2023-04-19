@@ -322,63 +322,147 @@ uint8_t refresh_lcd(void)
      * It displays if the device is running OK and which motor direction is 
      * enabled. Example message: "STAT: PC AZ+ EL-"
      */
-    printf("STAT:");
+    
     
     switch(command.source)
-    {
+    {   
+        //////////////////////////////////////////////////////////////////////////
         case CMD_SRC_PC:
-            printf(" PC ");
+            lcd_setCursor(13, 0);
+            printf(" PC");
+            lcd_setCursor(0,0);
+            
+            //////////////////
+            printf("STAT:");
+            printf(" AZ");
+            // Azimuth direction
+            switch(motor.az.dir)
+            {
+                case MOTOR_POS:
+                    printf("+");
+                    break;
+                case MOTOR_NEG:
+                    printf("-");
+                    break;
+                default: // aka MOTOR_STOP
+                    printf("0");
+                    break;
+            }
+            ///////
+            // Elevation direction
+            printf(" EL");
+            switch(motor.alt.dir)
+            {
+                case MOTOR_POS:
+                    printf("+");
+                    break;
+                case MOTOR_NEG:
+                    printf("-");
+                    break;
+                default: // aka MOTOR_STOP
+                    printf("0");
+                    break;
+            }
+            // Update bottom row
+            lcd_setCursor(0,1);     // Write the bottom row
+
+            /* The bottom row is the degrees of the motor system.
+             * The message it prints is "AZ 123.4 EL 12.4"
+             * where 123.4 and 12.4 are the azimuth and elevation degrees.
+             * Since the elevation degrees shouldn't go above 90, 
+             * we can more or less assume we won't print outside the LCD boundary.
+             */
+            printf("AZ %3u.%1u EL %2u.%1u", motor.az.degrees/10, motor.az.degrees%10,
+                    motor.alt.degrees/10, motor.alt.degrees%10); 
             break;
+            //////////////////////////////////////////////////////////////////////////
         case CMD_SRC_LOCAL:
-            printf(" LC ");
+            lcd_setCursor(14, 0);
+            printf(" LC");
+            lcd_setCursor(0,0);
+            // Cases for the current menu operation at local control 
+            switch(local_menu_state)
+            {
+                case 1: // Azimuth motor control
+                    printf("+ Az -");
+                    break;
+                case 2:
+                    printf("+ Alt -");
+                    break;
+                case 3:
+                    printf("Az Reset-0 El");
+                    break;
+                case 4:
+                    printf("  Quit OK");
+                    break;
+            }
+            lcd_setCursor(0,1);
+            /* The bottom row is the degrees of the motor system.
+             * The message it prints is "AZ 123.4 EL 12.4"
+             * where 123.4 and 12.4 are the azimuth and elevation degrees.
+             * Since the elevation degrees shouldn't go above 90, 
+             * we can more or less assume we won't print outside the LCD boundary.
+             */
+            printf("AZ %3u.%1u EL %2u.%1u", motor.az.degrees/10, motor.az.degrees%10,
+                    motor.alt.degrees/10, motor.alt.degrees%10); 
             break;
+            //////////////////////////////////////////////////////////////////////////
         case CMD_SRC_DEBUG:
-            printf(" DB ");
+            lcd_setCursor(14, 0);
+            printf(" DB");
+            lcd_setCursor(0,0);
+            
+            //////////////////
+            printf("STAT:");
+            printf(" AZ");
+            // Azimuth direction
+            switch(motor.az.dir)
+            {
+                case MOTOR_POS:
+                    printf("+");
+                    break;
+                case MOTOR_NEG:
+                    printf("-");
+                    break;
+                default: // aka MOTOR_STOP
+                    printf("0");
+                    break;
+            }
+            ///////
+            // Elevation direction
+            printf(" EL");
+            switch(motor.alt.dir)
+            {
+                case MOTOR_POS:
+                    printf("+");
+                    break;
+                case MOTOR_NEG:
+                    printf("-");
+                    break;
+                default: // aka MOTOR_STOP
+                    printf("0");
+                    break;
+            }
+            // Update bottom row
+            lcd_setCursor(0,1);     // Write the bottom row
+
+            /* The bottom row is the degrees of the motor system.
+             * The message it prints is "AZ 123.4 EL 12.4"
+             * where 123.4 and 12.4 are the azimuth and elevation degrees.
+             * Since the elevation degrees shouldn't go above 90, 
+             * we can more or less assume we won't print outside the LCD boundary.
+             */
+            printf("AZ %3u.%1u EL %2u.%1u", motor.az.degrees/10, motor.az.degrees%10,
+                    motor.alt.degrees/10, motor.alt.degrees%10); 
             break;
+            //////////////////////////////////////////////////////////////////////////
         default:
-            printf("ERR "); // TODO
-            break;
-    }
-    printf("AZ");
-    
-    switch(motor.az.dir)
-    {
-        case MOTOR_POS:
-            printf("+");
-            break;
-        case MOTOR_NEG:
-            printf("-");
-            break;
-        default: // aka MOTOR_STOP
-            printf("0");
+            printf("ERR            "); // TODO
+            lcd_setCursor(0,1);
+            printf("               ");
             break;
     }
     
-    printf(" EL");
-    switch(motor.alt.dir)
-    {
-        case MOTOR_POS:
-            printf("+");
-            break;
-        case MOTOR_NEG:
-            printf("-");
-            break;
-        default: // aka MOTOR_STOP
-            printf("0");
-            break;
-    }
-    
-    
-    lcd_setCursor(0,1);     // Write the bottom row
-    
-    /* The bottom row is the degrees of the motor system.
-     * The message it prints is "AZ 123.4 EL 12.4"
-     * where 123.4 and 12.4 are the azimuth and elevation degrees.
-     * Since the elevation degrees shouldn't go above 90, 
-     * we can more or less assume we won't print outside the LCD boundary.
-     */
-    printf("AZ %3u.%1u EL %2u.%1u", motor.az.degrees/10, motor.az.degrees%10,
-            motor.alt.degrees/10, motor.alt.degrees%10); 
 
     print_output = print_op_save; // Restore state of printf
     return 1;

@@ -21,9 +21,15 @@ void process_command(void);
 void update_motors(void);
 void print_usb_option_screen(void);
 void read_pc_commands_temp(void);
+void read_buttons(void);
 
 motor_dir_t prev_alt_dir = MOTOR_STOP; // To use in the main loop (determine if update is necessary)
 motor_dir_t prev_az_dir = MOTOR_STOP;
+
+// Variable declarations for read_buttons()
+uint16_t button_time = 0;
+uint16_t button_delay = 250;
+bool button_time_check = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main program. Configure everything and update states in an endless loop.
@@ -43,9 +49,12 @@ int main(void)
     
     // Initialize timestamp for blinking LED
     uint16_t led_time = timestamp_raw();
+    // Initialize button_time timestamp
+    button_time = timestamp_raw();
     
     // Print the USB Option Menu
     print_usb_option_screen();
+    
     
     // The superlooop
     while (1)
@@ -72,7 +81,7 @@ int main(void)
         read_pc_commands_temp();
         
         // Read buttons
-        
+        read_buttons();
         
         
         convert_angles(); // Convert rotary encoder pulses to angles
@@ -84,11 +93,12 @@ int main(void)
         {
             update_motors();  // update motor directions
         }
+        ///////
         
         refresh_lcd(); // Refresh LCD at 2Hz
         
         // Blink LED at 4Hz
-        if(timestamp_to_ms(timestamp_raw() - led_time) > 250) 
+        if(timestamp_to_ms(timestamp_raw() - led_time) > 250) // 250 ms
         {
             nSTAT_LED_Toggle(); // "Heartbeat" LED
             led_time = timestamp_raw();
@@ -105,7 +115,7 @@ int main(void)
 void welcome_message(void)
 {
     print_output = PRINT_USB;
-    printf("\r\nRadio Telescope Control System Begin\r\n");
+    printf("\r\n\nRadio Telescope Control System\r\n");
     
     lcd_setCursor(0,0);
 
@@ -120,7 +130,7 @@ void print_usb_option_screen(void) // UART1 options screen
 {
     uint8_t print_op_save = print_output;   // Store current state of printf.
     print_output = PRINT_USB;
-    printf("\r\n\nRadio Telescope Option Menu\r\nOptions:");
+    printf("\r\n\n\nRadio Telescope Option Menu\r\nOptions:");
     printf( "\r\n1 - Stop Motors (CMD_STOP)"
             "\r\n2 - Altitude Up (CMD_ALT_POS)"
             "\r\n3 - Altitude Down (CMD_ALT_NEG)"
@@ -131,53 +141,160 @@ void print_usb_option_screen(void) // UART1 options screen
             "\r\n8 - Azimuth Stop Motor (CMD_AZ_STOP)"
             "\r\n9 - Set Azimuth Encoder to Zero Point (CMD_AZ_RESET)"
             "\r\n0 - Take Motors to Home (0,0) Point (CMD_HOME)"
+            "\r\nESC - Reprint the menu"
             "\r\nEnter option: ");
     print_output = print_op_save; // Restore state of printf
 }
 
+/////////////
+
+// Button 1 is left button
+// Button 2 is center (mode) button
+// Button 3 is right button
+
+void read_buttons(void)
+{
+    // check button time
+    button_time_check = (timestamp_to_ms(timestamp_raw() - button_time) > button_delay);
+    
+    // if any button is pressed, change source to local control
+    if ((!BUTTON1_GetValue() || !BUTTON2_GetValue() || !BUTTON3_GetValue()) && (local_menu_state == 0) && button_time_check)
+    {
+        command.source = CMD_SRC_LOCAL; // set to local control source for commands
+        local_menu_state = 1;
+        button_time = timestamp_raw();
+    }
+    
+    // check button time
+    button_time_check = (timestamp_to_ms(timestamp_raw() - button_time) > button_delay);
+    
+    // Check for menu increment (mode button)
+    if (!BUTTON2_GetValue() && button_time_check && (command.source == CMD_SRC_LOCAL))
+    {
+        local_menu_state += 1;
+        if (local_menu_state == 5)
+        {
+            local_menu_state = 1;
+        }
+        button_time = timestamp_raw();
+    }
+    
+    // Operate in menu
+    switch(local_menu_state)
+    {
+        case 0:
+            break;
+        case 1: // Azimuth Motor Control
+            if (!BUTTON1_GetValue() && button_time_check) // CCW
+            {
+                command.command = CMD_AZ_NEG;
+                button_time = timestamp_raw();
+            }
+            else if (!BUTTON3_GetValue() && button_time_check) // CW
+            {
+                command.command = CMD_AZ_POS;
+                button_time = timestamp_raw();
+            }
+            else if (BUTTON1_GetValue() && BUTTON3_GetValue()) // Stop motor
+            {
+                command.command = CMD_AZ_STOP;
+                button_time = timestamp_raw();
+            }
+            break;
+        case 2: // Altitude Motor Control
+            if (!BUTTON1_GetValue() && button_time_check) // Down
+            {
+                command.command = CMD_ALT_NEG;
+                button_time = timestamp_raw();
+            }
+            else if (!BUTTON3_GetValue() && button_time_check) // Up
+            {
+                command.command = CMD_ALT_POS;
+                button_time = timestamp_raw();
+            }
+            else if (BUTTON1_GetValue() && BUTTON3_GetValue()) // Stop motor
+            {
+                command.command = CMD_ALT_STOP;
+                button_time = timestamp_raw();
+            }
+            break;
+        case 3: // Az - Zero - El ///// This menu will zero az if left button clicked or zero alt(el) if right button clicked
+            if (!BUTTON1_GetValue() && button_time_check) // zero the azimuth
+            {
+                motor.az.degrees = 0;
+                button_time = timestamp_raw();
+            }
+            else if (!BUTTON3_GetValue() && button_time_check) // zero the altitude
+            {
+                motor.alt.degrees = 0;
+                button_time = timestamp_raw();
+            }
+            break;
+        case 4: // Quit
+            if (!BUTTON3_GetValue() && button_time)
+            {
+                command.source = CMD_SRC_PC;
+            }
+            break;
+    }
+    
+    
+}
+
+//////////////
+// Variable declarations for read_pc_commands_temp()
 char input;
 
 void read_pc_commands_temp(void)
 {
     input = get_char_usb(); // get PC input
-    command.source = CMD_SRC_PC;
-    switch(input)
+    
+    // Determine if it is local control --- local control has priority and stops PC commands
+    if (command.source != CMD_SRC_LOCAL)
     {
-        case -1: // standard for no input
-            break;
-        case '1': // stop both motors
-            command.command = CMD_STOP; 
-            break;
-        case '2': // altitude move up
-            command.command = CMD_ALT_POS;
-            break;
-        case '3': // altitude move down
-            command.command = CMD_ALT_NEG;
-            break;
-        case '4': // altitude motor stop
-            command.command = CMD_ALT_STOP;
-            break;
-        case '5': // reset altitude encoders to zero
-            command.command = CMD_ALT_RESET;
-            break;
-        case '6': // azimuth clockwise
-            command.command = CMD_AZ_POS;
-            break;
-        case '7': // azimuth counter-clockwise
-            command.command = CMD_AZ_NEG;
-            break;
-        case '8': // stop azimuth motor
-            command.command = CMD_AZ_STOP;
-            break;
-        case '9': // reset azimuth encoders to zero
-            command.command = CMD_AZ_RESET;
-            break;
-        case '0': // take the motors to home (0,0)
-            command.command = CMD_HOME;
-            break;
-        default:
-            command.command = CMD_STOP;
-            break;
+        command.source = CMD_SRC_PC;
+    
+        switch(input)
+        {
+            case -1: // standard for no input
+                break;
+            case '1': // stop both motors
+                command.command = CMD_STOP; 
+                break;
+            case '2': // altitude move up
+                command.command = CMD_ALT_POS;
+                break;
+            case '3': // altitude move down
+                command.command = CMD_ALT_NEG;
+                break;
+            case '4': // altitude motor stop
+                command.command = CMD_ALT_STOP;
+                break;
+            case '5': // reset altitude encoders to zero
+                command.command = CMD_ALT_RESET;
+                break;
+            case '6': // azimuth clockwise
+                command.command = CMD_AZ_POS;
+                break;
+            case '7': // azimuth counter-clockwise
+                command.command = CMD_AZ_NEG;
+                break;
+            case '8': // stop azimuth motor
+                command.command = CMD_AZ_STOP;
+                break;
+            case '9': // reset azimuth encoders to zero
+                command.command = CMD_AZ_RESET;
+                break;
+            case '0': // take the motors to home (0,0)
+                command.command = CMD_HOME;
+                break;
+            case ESC:
+                print_usb_option_screen();
+            // need a case later to restart the program
+            default:
+                command.command = CMD_STOP;
+                break;
+        }
     }
 }
 
