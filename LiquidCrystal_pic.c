@@ -377,23 +377,23 @@ uint8_t refresh_lcd(void)
             break;
             //////////////////////////////////////////////////////////////////////////
         case CMD_SRC_LOCAL:
-            lcd_setCursor(14, 0);
+            lcd_setCursor(13, 0);
             printf(" LC");
             lcd_setCursor(0,0);
             // Cases for the current menu operation at local control 
             switch(local_menu_state)
             {
                 case 1: // Azimuth motor control
-                    printf("+ Az -");
+                    printf("   - AZ +    ");
                     break;
                 case 2:
-                    printf("+ Alt -");
+                    printf("   - EL +    ");
                     break;
                 case 3:
-                    printf("Az Reset-0 El");
+                    printf("Az  ZERO  El ");
                     break;
                 case 4:
-                    printf("  Quit OK");
+                    printf("  Quit OK    ");
                     break;
             }
             lcd_setCursor(0,1);

@@ -131,6 +131,7 @@ void SYSTEM_Initialize(void)
     lcd_backlight();
     lcd_clear();
     CNPU2bits.CN26PUE = 1; // DIAGS is weak pull up
+    EXT_LED_SetHigh(); // For now, pushbutton ground is via external LED
 }
 
 /**
