@@ -39,6 +39,12 @@ int main(void)
     
     SYSTEM_Initialize();
     
+    // TODO: clean up
+    motor.alt.speed = 3;
+    motor.az.speed = 3;
+    motor.alt.pwm = 2;
+    motor.az.pwm = 2;
+    
     diags = !DIAGS_GetValue();
     
     welcome_message();
@@ -149,11 +155,11 @@ void print_usb_option_screen(void) // UART1 options screen
     print_output = print_op_save; // Restore state of printf
 }
 
-/////////////
-
-// Button 1 is left button
-// Button 2 is center (mode) button
-// Button 3 is right button
+////////////////////////////////////////////////////////////////////////////////
+// Read buttons
+// Button 1 is left (down)   button
+// Button 2 is center (menu) button
+// Button 3 is right (up/OK) button
 #define BUTTON_DEBOUNCE 250
 
 // Update & debounce buttons
@@ -252,13 +258,11 @@ void read_buttons(void)
     } 
 }
 
-//////////////
-// Variable declarations for read_pc_commands_temp()
-char input;
-
+////////////////////////////////////////////////////////////////////////////////
+// Get commands from control PC & store as status
 void read_pc_commands_temp(void)
 {
-    input = get_char_usb(); // get PC input
+    char input = get_char_usb(); // get PC input
     
     // Determine if it is local control --- local control has priority and stops PC commands
     if (command.source != CMD_SRC_LOCAL)
@@ -309,7 +313,7 @@ void read_pc_commands_temp(void)
     }
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
 // convert rotary encoder pulses to angles
 void convert_angles(void)
 {
@@ -321,6 +325,7 @@ void convert_angles(void)
     motor.alt.degrees = (motor.alt.pulse1 + motor.alt.pulse2)/79.22;
 }
 
+////////////////////////////////////////////////////////////////////////////////
 void process_command(void)
 {
     // This is so anything can instantly stop the az and alt motors
@@ -437,6 +442,7 @@ void process_command(void)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
 // Update the direction of the motors
 void update_motors(void)
 {

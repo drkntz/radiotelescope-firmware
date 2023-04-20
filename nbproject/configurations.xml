@@ -24,6 +24,7 @@
       <itemPath>diagnostic.h</itemPath>
       <itemPath>LiquidCrystal_pic.h</itemPath>
       <itemPath>protocol.h</itemPath>
+      <itemPath>motor.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -52,6 +53,7 @@
       <itemPath>common.c</itemPath>
       <itemPath>LiquidCrystal_pic.c</itemPath>
       <itemPath>protocol.c</itemPath>
+      <itemPath>motor.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

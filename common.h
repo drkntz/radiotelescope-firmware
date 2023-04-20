@@ -57,6 +57,10 @@ struct _Motor
     uint16_t current;   // TODO: how are we formatting current?
     int32_t pulse1;    // Encoder 1 transition count.
     int32_t pulse2;    // Encoder 2 transition count.
+    uint16_t off_timestamp; // keep track of how long it's been off. Used only in motor movement TODO: make private
+    uint16_t pwm_timestamp;
+    uint8_t pwm;
+    uint8_t speed;
 };
 
 // Motor structure with an entry for each axis.
