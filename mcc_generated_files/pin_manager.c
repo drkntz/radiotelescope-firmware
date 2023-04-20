@@ -131,8 +131,20 @@ static bool el2_encoder_state = false;
 // incrementing the encoder count because default is to increment. 
 // TODO: we should stick with one thing, either alt/az or el/az, not swap between
 // the two names. 
-void __attribute__ ((weak)) CN_CallBack(void)
+void  CN_CallBack(void)
 {
+    static motor_dir_t az_dir, el_dir;
+    
+    // Retain old state during a stop that way we can account for drifting/overshoot
+    if(motor.az.dir != MOTOR_STOP)
+    {
+        az_dir = motor.az.dir;
+    }
+    if(motor.alt.dir != MOTOR_STOP)
+    {
+        el_dir = motor.alt.dir;
+    }
+    
     // Check which pin has changed state and increment the pulse counter
     
     bool temp = AZ_ENCODER1_GetValue(); 
@@ -140,7 +152,7 @@ void __attribute__ ((weak)) CN_CallBack(void)
     if(az1_encoder_state != temp)
     {
         az1_encoder_state = temp;
-        if(motor.az.dir == MOTOR_NEG)
+        if(az_dir == MOTOR_NEG)
         {
             motor.az.pulse1 --;
         }
@@ -155,7 +167,7 @@ void __attribute__ ((weak)) CN_CallBack(void)
     if(az2_encoder_state != temp)
     {
         az2_encoder_state = temp;
-        if(motor.az.dir == MOTOR_NEG)
+        if(az_dir == MOTOR_NEG)
         {
             motor.az.pulse2 --;
         }
@@ -170,7 +182,7 @@ void __attribute__ ((weak)) CN_CallBack(void)
     if(el1_encoder_state != temp)
     {
         el1_encoder_state = temp;
-        if(motor.alt.dir == MOTOR_NEG)
+        if(el_dir == MOTOR_NEG)
         {
             motor.alt.pulse1 --;
         }
@@ -185,7 +197,7 @@ void __attribute__ ((weak)) CN_CallBack(void)
     if(el2_encoder_state != temp)
     {
         el2_encoder_state = temp;
-        if(motor.alt.dir == MOTOR_NEG)
+        if(el_dir == MOTOR_NEG)
         {
             motor.alt.pulse2 --;
         }

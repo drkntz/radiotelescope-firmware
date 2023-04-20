@@ -81,10 +81,10 @@ int main(void)
         
         // Update to previous motor directions
         
-        printf("\r Alt_Dir %x - Az_Dir %x - Alt_Deg %3d.%01u - Az_Deg %3d.%01u - Command   %u",
-                motor.alt.dir, motor.az.dir, motor.alt.degrees/10,
-                abs(motor.alt.degrees%10), motor.az.degrees/10, abs(motor.az.degrees%10),
-                command.command);
+        printf("\r Alt_Dir %x - Az_Dir %x - Alt_Deg %3d.%01u - Az_Deg %3d.%01u - Command   %u %d %d %d %d",
+                motor.alt.dir, motor.az.dir, motor.alt.degrees,
+                abs(motor.alt.degrees%10), motor.az.degrees, abs(motor.az.degrees%10),
+                command.command, motor.az.pulse1, motor.az.pulse2, motor.alt.pulse1, motor.alt.pulse2);
         
         // Temporary read PC commands (this will be changed to interact with other code)
         read_pc_commands_temp();
@@ -93,16 +93,14 @@ int main(void)
         read_buttons();
         
         
+        
+       
+        process_command(); // Update non-movement based commands
+        
         convert_angles(); // Convert rotary encoder pulses to angles
         
-        process_command();
+        update_motors(); // Update motors and handle movement-based commands
         
-        // Determine if motor update is necessary
-        if (!((motor.alt.dir == prev_alt_dir) && (motor.az.dir == prev_az_dir)))
-        {
-            update_motors();  // update motor directions
-        }
-        ///////
         
         refresh_lcd(); // Refresh LCD at 2Hz
         
@@ -326,6 +324,8 @@ void convert_angles(void)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+/* Process commands. Motor commands are processed in the motor update
+ * */
 void process_command(void)
 {
     // This is so anything can instantly stop the az and alt motors
@@ -349,66 +349,6 @@ void process_command(void)
     // CMD_REPORT_STATUS ----------TODO
     
     
-    // CMD_HOME
-    if (command.command == CMD_HOME)
-    {
-        // Establish target location to home (0,0) -- TODO this should be part of the PC input side of things then
-        command.alt_deg = 0;
-        command.az_deg = 0;
-        
-        // Determine alt/az directions --- TODO current setup may have problems with repeatedly going back and forth
-        // Altitude
-        if (motor.alt.degrees == command.alt_deg)
-        {
-            motor.alt.dir = MOTOR_STOP;
-        }
-        else if (motor.alt.degrees > command.alt_deg)
-        {
-            motor.alt.dir = MOTOR_NEG;
-        }
-        else if (motor.alt.degrees < command.alt_deg)
-        {
-            motor.alt.dir = MOTOR_POS;
-        }
-        // Azimuth
-        if (motor.az.degrees == command.az_deg)
-        {
-            motor.az.dir = MOTOR_STOP;
-        }
-        else if (motor.az.degrees > command.az_deg)
-        {
-            motor.az.dir = MOTOR_NEG;
-        }
-        else if (motor.az.degrees < command.az_deg)
-        {
-            motor.az.dir = MOTOR_POS;
-        }
-        
-        // When at location, change command to CMD_STOP
-        if ((motor.alt.dir == MOTOR_STOP) && (motor.az.dir == MOTOR_STOP))
-        {
-            command.command = CMD_STOP;
-        }
-    }
-    
-    // Altitude
-    // CMD_ALT_STOP
-    if (command.command == CMD_ALT_STOP)
-    {
-        EL_CONTROL1_SetLow();
-        EL_CONTROL2_SetLow();
-        motor.alt.dir = MOTOR_STOP;
-    }
-    // CMD_ALT_POS - up
-    else if (command.command == CMD_ALT_POS)
-    {
-        motor.alt.dir = MOTOR_POS;
-    }
-    // CMD_ALT_NEG - down
-    else if (command.command == CMD_ALT_NEG)
-    {
-        motor.alt.dir = MOTOR_NEG;
-    }
     // CMD_ALT_RESET - reset alt encoders to zero
     else if (command.command == CMD_ALT_RESET)
     {
@@ -416,78 +356,10 @@ void process_command(void)
         motor.alt.pulse2 = 0;
     }
 
-    // Azimuth
-    // CMD_AZ_STOP
-    if (command.command == CMD_AZ_STOP)
-    {
-        AZ_CONTROL1_SetLow();
-        AZ_CONTROL2_SetLow();
-        motor.az.dir = MOTOR_STOP;
-    }
-    // CMD_AZ_POS - Clockwise
-    else if (command.command == CMD_AZ_POS)
-    {
-        motor.az.dir = MOTOR_POS;
-    }
-    // CMD_AZ_NEG - Counter-Clockwise
-    else if (command.command == CMD_AZ_NEG)
-    {
-        motor.az.dir = MOTOR_NEG;
-    }
     // CMD_AZ_RESET - reset az encoders to zero
     else if (command.command == CMD_AZ_RESET)
     {
         motor.az.pulse1 = 0;
         motor.az.pulse2 = 0;
     }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-// Update the direction of the motors
-void update_motors(void)
-{
-    // Stop Motors
-    if (motor.alt.dir == MOTOR_STOP)
-    {
-        AZ_CONTROL1_SetLow();
-        AZ_CONTROL2_SetLow();
-        motor.alt.dir = MOTOR_STOP;
-    }
-    if (motor.az.dir == MOTOR_STOP)
-    {
-        EL_CONTROL1_SetLow();
-        EL_CONTROL2_SetLow();
-        motor.az.dir = MOTOR_STOP;
-    }
-    
-    // Altitude
-    if (motor.alt.dir == MOTOR_POS) // Up
-    {
-        EL_CONTROL2_SetLow();
-        __delay_ms(600);    // 600 ms is the motor turnoff time -- change this later to not delay whole program (use timer1)
-        EL_CONTROL1_SetHigh();
-    }
-    else if (motor.alt.dir == MOTOR_NEG) // Down
-    {
-        EL_CONTROL1_SetLow();
-        __delay_ms(600);    // 600 ms is the motor turnoff time -- change this later to not delay whole program (use timer1)
-        EL_CONTROL2_SetHigh();
-    }
-    
-    // Azimuth
-    if (motor.az.dir == MOTOR_POS) // Clockwise
-    {
-        AZ_CONTROL2_SetLow();
-        __delay_ms(600);    // 600 ms is the motor turnoff time -- change this later to not delay whole program (use timer1)
-        AZ_CONTROL1_SetHigh();
-    }
-    else if (motor.az.dir == MOTOR_NEG) // Counter-Clockwise
-    {
-        AZ_CONTROL1_SetLow();
-        __delay_ms(600);    // 600 ms is the motor turnoff time -- change this later to not delay whole program (use timer1)
-        AZ_CONTROL2_SetHigh();
-    }
-    
-    prev_alt_dir = motor.alt.dir;
-    prev_az_dir = motor.az.dir;
 }

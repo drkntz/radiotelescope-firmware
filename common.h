@@ -25,6 +25,7 @@
 #include "mcc_generated_files/uart2.h"
 #include "LiquidCrystal_pic.h"
 #include "mcc_generated_files/tmr1.h"
+#include "motor.h"
 
 
 // TODO: put program constants here

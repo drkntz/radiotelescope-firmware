@@ -34,25 +34,29 @@ enum
 };
 
 // Public function for updating in main loop
-void update_motors_new(void);
+void update_motors(void);
 
 // Private functions
-static void _motor_update(struct _Motor *, uint8_t desired_move, uint16_t target_degrees); // Pass by reference. &motor.alt for example
+static void _motor_update(struct _Motor *, uint8_t desired_move, int16_t target_degrees); // Pass by reference. &motor.alt for example
 
 
 
 // public function for updating in main
-void update_motors_new(void)
+void update_motors(void)
 {
     static uint8_t desired_move_alt = MOVE_STOP;
     static uint8_t desired_move_az = MOVE_STOP;
-    static commands_t old_command = CMD_NONE;
+    //static commands_t old_command = CMD_NONE;
     
     // If we got a new command, then update the move type
-    if(command.command != old_command)
+    if(1) //command.command != old_command)
     {
         switch(command.command)
         {
+            case CMD_STOP:
+                desired_move_alt = MOVE_STOP;
+                desired_move_az = MOVE_STOP;
+                break;
             case CMD_ALT_NEG:
                 desired_move_alt = MOVE_NEG;
                 break;
@@ -68,9 +72,12 @@ void update_motors_new(void)
             case CMD_AZ_POS:
                 desired_move_az = MOVE_POS;
                 break;
+            case CMD_AZ_STOP:
+                desired_move_az = MOVE_STOP;
+                break;
             case CMD_HOME:
-                command.alt_deg = 0;
-                command.az_deg = 0;
+                command.alt_deg = 50;
+                command.az_deg = 50;
                 // fall through
             case CMD_GOTO:
                 desired_move_alt = MOVE_DEGREES;
@@ -90,19 +97,19 @@ void update_motors_new(void)
     // Now act on decisions for each axis
     // Altitude axis (AKA elevation AKA up/down )
     // Stop motor
-    if(motor.alt.dir == MOTOR_STOP || motor.alt.pwm == PWM_PWL)
+    if(motor.alt.dir == MOTOR_STOP) 
     {
         EL_CONTROL1_SetLow();
         EL_CONTROL2_SetLow();
     }
     // Altitude positive (UP)
-    if(motor.alt.dir == MOTOR_POS && motor.alt.pwm > 0)
+    if(motor.alt.dir == MOTOR_POS)
     {
        EL_CONTROL2_SetLow(); // Just to be sure
        EL_CONTROL1_SetHigh();
     }
     // Altitude negative (down)
-    if(motor.alt.dir == MOTOR_POS && motor.alt.pwm > 0)
+    if(motor.alt.dir == MOTOR_NEG)
     {
        EL_CONTROL1_SetLow(); // Just to be sure
        EL_CONTROL2_SetHigh();
@@ -110,19 +117,19 @@ void update_motors_new(void)
     
     // Aziumuth axis (AKA north-south left-right axis)
     // Stop motor
-    if(motor.az.dir == MOTOR_STOP || motor.alt.pwm == PWM_PWL)
+    if(motor.az.dir == MOTOR_STOP)
     {
         AZ_CONTROL1_SetLow();
         AZ_CONTROL2_SetLow();
     }
     // Azimuth positive
-    if(motor.az.dir == MOTOR_POS && motor.alt.pwm > 0)
+    if(motor.az.dir == MOTOR_POS) 
     {
        AZ_CONTROL2_SetLow(); // Just to be sure
        AZ_CONTROL1_SetHigh();
     }
     // Azimuth negative
-    if(motor.az.dir == MOTOR_POS && motor.alt.pwm > 0)
+    if(motor.az.dir == MOTOR_NEG)
     {
        AZ_CONTROL1_SetLow(); // Just to be sure
        AZ_CONTROL2_SetHigh();
@@ -137,76 +144,40 @@ void update_motors_new(void)
 #define PWM_HIGH_TIME 50        // $ms high
 #define PWM_LOW_TIME 100        // 33% pwm
 
-static void _motor_update(struct _Motor *mptr, uint8_t desired_move, uint16_t target_degrees) 
+static void _motor_update(struct _Motor *mptr, uint8_t desired_move, int16_t target_degrees) 
 {
-    // Handle commands to stop
-    if(desired_move == MOVE_STOP)
-    {
-        mptr->dir = MOTOR_STOP;                 // OK, we can stop
-        mptr->off_timestamp = timestamp_raw(); // Make sure we allow everything to settle so we dont accidentally break something by doing go + -> stop -> go -
-        return; // TODO: return early so we get quickest response
-    }
+
     
     // Handle commands to go to a certain location
     if(desired_move == MOVE_DEGREES)
     {
         if(mptr->degrees > target_degrees)
         {
-            if(mptr->degrees - target_degrees > 10) // within 1 degree
-            {
-                mptr->speed = 1; // slow down
-            }
             desired_move = MOVE_NEG;
         }
         else if(mptr->degrees < target_degrees)
         {
-            if(target_degrees - mptr->degrees > 10) // within 1 degree
-            {
-                mptr->speed = 1; // slow down
-            }
             desired_move = MOVE_POS;
         }
         else // We have reached the location!
         {
-            // return to previous speed TODO
-            mptr->speed = 3;
-            mptr->pwm = PWM_NONE;
-            return; // TODO: early return bad idea?
+            desired_move = MOVE_STOP;
         }
     }
     
-    // Handle commands to move negative direction
-    if(desired_move == MOVE_NEG)
+    // Handle commands to stop
+    if(desired_move == MOVE_STOP)
     {
-        // Only if we are doing PWM, we should calculate duty cycle
-        // Otherwise, ignore this
-        if(mptr->dir == MOTOR_NEG )
-        {
-            if(mptr->speed < 3) // 3 is max speed TODO
-            {
-                if(mptr->pwm == PWM_NONE) // initialize PWM
-                {
-                    mptr->pwm = PWM_PWH;
-                    mptr->pwm_timestamp = timestamp_raw();
-                }
-                else if(mptr->pwm == PWM_PWH && timestamp_to_ms(timestamp_raw() - mptr->pwm_timestamp) > PWM_HIGH_TIME)
-                {
-                    mptr->pwm = PWM_PWL;
-                    mptr->pwm_timestamp = timestamp_raw();
-                }
-                else if(mptr->pwm == PWM_PWL && timestamp_to_ms(timestamp_raw() - mptr->pwm_timestamp) > PWM_LOW_TIME)
-                {
-                    mptr->pwm = PWM_PWH;
-                    mptr->pwm_timestamp = timestamp_raw();
-                }
-                
-            }
-            // clean up. TODO: is this necessary?
-            else if(mptr->pwm != PWM_NONE)
-            {
-                mptr->pwm = PWM_NONE;
-            }
-        }
+        mptr->dir = MOTOR_STOP;                 // OK, we can stop
+        mptr->off_timestamp = timestamp_raw(); // Make sure we allow everything to settle so we dont accidentally break something by doing go + -> stop -> go -
+        //return; // TODO: return early so we get quickest response
+    }
+    
+    // Handle commands to move negative direction
+    else if(desired_move == MOVE_NEG)
+    {
+        // Already moving negative, ignore
+        if(mptr->dir == MOTOR_NEG )  { }
 
         /* We were going in positive direction, so we have to stop, 
          * wait, and then change direction. */
@@ -224,7 +195,6 @@ static void _motor_update(struct _Motor *mptr, uint8_t desired_move, uint16_t ta
             if(timestamp_to_ms(timestamp_raw() - mptr->off_timestamp) > DIR_CHANGE_DELAY)
             {
                 mptr->dir = MOTOR_NEG;
-                
             }
             
         }
@@ -234,35 +204,8 @@ static void _motor_update(struct _Motor *mptr, uint8_t desired_move, uint16_t ta
     // Handle commands to move positive direction
     else if(desired_move == MOVE_POS)
     {
-        // Only if we are doing PWM, we should calculate duty cycle
-        // otherwise, ignore this
-        if(mptr->dir == MOTOR_POS)
-        {
-            if(mptr->speed < 3) // 3 is max speed TODO
-            {
-                if(mptr->pwm == PWM_NONE) // initialize PWM
-                {
-                    mptr->pwm = PWM_PWH;
-                    mptr->pwm_timestamp = timestamp_raw();
-                }
-                else if(mptr->pwm == PWM_PWH && timestamp_to_ms(timestamp_raw() - mptr->pwm_timestamp) > PWM_HIGH_TIME)
-                {
-                    mptr->pwm = PWM_PWL;
-                    mptr->pwm_timestamp = timestamp_raw();
-                }
-                else if(mptr->pwm == PWM_PWL && timestamp_to_ms(timestamp_raw() - mptr->pwm_timestamp) > PWM_LOW_TIME)
-                {
-                    mptr->pwm = PWM_PWH;
-                    mptr->pwm_timestamp = timestamp_raw();
-                }
-                
-            }
-            // clean up. TODO: is this necessary?
-            else if(mptr->pwm != PWM_NONE)
-            {
-                mptr->pwm = PWM_NONE;
-            }
-        }
+        // already moving positive, ignore
+        if(mptr->dir == MOTOR_POS) { }
 
         /* We were going in negative direction, so we have to stop, 
          * wait, and then change direction. */

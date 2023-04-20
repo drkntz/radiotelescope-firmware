@@ -11,7 +11,7 @@
 #include <xc.h> // include processor files - each processor file is guarded.  
 #include "common.h"
 
-void update_motors_new(void); // public function for updating in main loop
+void update_motors(void); // public function for updating in main loop
 
 #endif	// MOTOR_H
 
