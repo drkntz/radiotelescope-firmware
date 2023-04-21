@@ -20,7 +20,7 @@ void convert_angles(void);
 void process_command(void);
 void update_motors(void);
 void print_usb_option_screen(void);
-void read_pc_commands_temp(void);
+void update_pc_menu(double, double);
 void read_buttons(void);
 void _goto(void); // get input from user and send goto command
 
@@ -78,28 +78,16 @@ int main(void)
          * refresh LCD                          done
          * blink status LEDs                    done
          */
-        
+
+    
         // This makes it easier to print floating point
         az_deg_print = motor.az.degrees/10.0;
         el_deg_print = motor.alt.degrees/10.0;
+        update_pc_menu(az_deg_print, el_deg_print);    // Get commands and print menu
         
-        // Update menu
-        printf("\r  %x     %x    |   %3.1f    %3.1f |  ",motor.alt.dir, motor.az.dir, el_deg_print, az_deg_print);
-        switch(command.source)
-        {
-            case CMD_SRC_LOCAL:
-                printf("Local");
-                break;
-            case CMD_SRC_PC:
-                printf("PC   ");
-                break;
-        }
-        
-        read_pc_commands_temp();    // Read menu options
-        
-        read_buttons();             // Read buttons
+        read_buttons();      // Read buttons
        
-        process_command();     // Update non-movement based commands
+        process_command();   // Update non-movement based commands
         
         convert_angles();   // Convert rotary encoder pulses to angles
         
@@ -308,61 +296,83 @@ enum
 };
 
 // Handle menu
-void read_pc_commands_temp(void)
+void update_pc_menu(double az_deg_print, double el_deg_print)
 {
     static uint8_t menu_state = MENU_STATE_MOVE; // Default to "Move" state
     char input = get_char_usb(); // get PC input
+
+
+    // Update menu
+    if(menu_state == MENU_STATE_MOVE)
+    {
+        printf("\r  %x     %x    |   %3.1f    %3.1f |  ",motor.alt.dir, motor.az.dir, el_deg_print, az_deg_print);
+        switch(command.source)
+        {
+            case CMD_SRC_LOCAL:
+                printf("Local");
+                break;
+            case CMD_SRC_PC:
+                printf("PC   ");
+                break;
+        }
+    }
     
     if(input == -1 || command.source == CMD_SRC_LOCAL)
     {
         return;
     }
     
-    // 
-    // Determine if it is local control --- local control has priority and stops PC commands
-    if (command.source != CMD_SRC_LOCAL)
+    switch(menu_state)
     {
-        command.source = CMD_SRC_PC;
-    
-        switch(input)
-        {
-            case -1: // standard for no input
-                break;
-            case '1': // altitude move up
-                command.command = CMD_ALT_POS;
-                break;
-            case '2': // altitude move down
-                command.command = CMD_ALT_NEG;
-                break;
-            case '3': // altitude motor stop
-                command.command = CMD_ALT_STOP;
-                break;
-            case '4': // azimuth +
-                command.command = CMD_AZ_POS;
-                break;
-            case '5': // azimuth -
-                command.command = CMD_AZ_NEG;
-                break;
-            case '6': // azimuth stop
-                command.command = CMD_AZ_STOP;
-                break;
-            case '7': // goto
-                _goto();
-                break;
-            case '8': // reset azimuth encoders to zero
-                command.command = CMD_AZ_RESET;
-                break;
-            case '0': // take the motors to home (0,0)
-                command.command = CMD_HOME;
-                break;
-            case ESC:
-                print_usb_option_screen();
-            // need a case later to restart the program
-            default:
-                command.command = CMD_STOP;
-                break;
-        }
+        case MENU_STATE_MOVE: // this is the basic menu state
+                switch(input)
+                {
+                    case '1': // altitude move up
+                        command.command = CMD_ALT_POS;
+                        break;
+                    case '2': // altitude move down
+                        command.command = CMD_ALT_NEG;
+                        break;
+                    case '3': // altitude motor stop
+                        command.command = CMD_ALT_STOP;
+                        break;
+                    case '4': // azimuth +
+                        command.command = CMD_AZ_POS;
+                        break;
+                    case '5': // azimuth -
+                        command.command = CMD_AZ_NEG;
+                        break;
+                    case '6': // azimuth stop
+                        command.command = CMD_AZ_STOP;
+                        break;
+                    case '7': // goto
+                        printf("\r\n\n");
+                        command.command = CMD_STOP;
+                        update_motors();
+                        menu_state = MENU_STATE_GOTO;
+                        break;
+                    case 'A': // take the motors to home (0,0)
+                        menu_state = MENU_STATE_ADVANCED;
+                        break;
+                    case ESC:
+                        print_usb_option_screen();
+                    // need a case later to restart the program
+                    default:
+                        command.command = CMD_STOP;
+                        break;
+                }
+            break;
+            
+        case MENU_STATE_GOTO:
+            _goto();
+            break;
+        case MENU_STATE_ADVANCED:
+            command.command = CMD_HOME;
+            break;
     }
+    
+
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -418,47 +428,62 @@ void process_command(void)
     }
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Helper for pc menu, go to a specific location
 void _goto(void)
 {
-    int16_t azdeg, altdeg;
+    static uint8_t goto_state =0;
+    static uint8_t tens_position = 1;
+    static int16_t azdeg = 0;
+    static int16_t altdeg = 0;
+    
     uint8_t num_in;
-    uint8_t tens_position = 1;
     
-    char input;
-    command.command = CMD_STOP;
-    update_motors();
-    printf("\r\n");
-    while(input != ESC)
+    char input = get_char_usb();
+    if(input == -1)
     {
-        input = get_char_wait_usb();
+        return;
+    }
+    
+    if(input != ESC)
+    {
+        
         num_in = ascii_to_num(input);
-        if(num_in < 10)
+        if(num_in > 10) // is not a legit number
         {
-            printf("%u", num_in);
-            azdeg = num_in*tens_position;
-            tens_position *= 10;
+            return;
         }
     }
     
-    tens_position = 1;
-    input  = -1;
-    
-    while(input != ESC)
+    if(input == ESC || tens_position > 100)
     {
-        input = get_char_wait_usb();
-        num_in = ascii_to_num(input);
-        if(num_in < 10)
-        {
-            printf("%u", num_in);
-            altdeg = num_in*tens_position;
-            tens_position *= 10;
-        }
+        goto_state ++;
+        tens_position = 1;
     }
-    altdeg = altdeg*10;
-    azdeg = azdeg*10;
     
-    printf("\r\nAlt: %d AZ %d\r\n", altdeg, azdeg);
-    command.alt_deg = altdeg;
-    command.az_deg = azdeg;
-    command.command = CMD_GOTO;
+    switch(goto_state)
+    {
+        case 0: // alt
+            altdeg += num_in*tens_position;
+            tens_position = tens_position*10;
+            break;
+        case 1:
+            azdeg += num_in*tens_position;
+            tens_position = tens_position*10;
+            break;
+        case 3:
+            command.alt_deg = altdeg;
+            command.az_deg = azdeg;
+            command.command = CMD_GOTO;
+            azdeg = 0;
+            altdeg = 0;
+            goto_state = 0;
+            tens_position = 1;
+            break;
+        default:
+            return; // TODO
+            
+    }
+    
+    printf("\rGOTO:  ALT: %3.1f   AZ: %3.1f", altdeg/10.0, azdeg/10.0);
 }

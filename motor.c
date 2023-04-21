@@ -76,8 +76,8 @@ void update_motors(void)
                 desired_move_az = MOVE_STOP;
                 break;
             case CMD_HOME:
-                command.alt_deg = 0;
-                command.az_deg = 0;
+                command.alt_deg = -300;
+                command.az_deg = -800;
                 // fall through
             case CMD_GOTO:
                 desired_move_alt = MOVE_DEGREES;
