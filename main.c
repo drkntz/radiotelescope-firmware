@@ -22,10 +22,8 @@ void update_motors(void);
 void print_usb_option_screen(void);
 void read_pc_commands_temp(void);
 void read_buttons(void);
+void _goto(void); // get input from user and send goto command
 
-
-motor_dir_t prev_alt_dir = MOTOR_STOP; // To use in the main loop (determine if update is necessary)
-motor_dir_t prev_az_dir = MOTOR_STOP;
 
 // Variable declarations for read_buttons()
 uint16_t button_time = 0;
@@ -36,6 +34,7 @@ uint16_t button_delay = 250;
 int main(void)
 {
     bool diags;
+    double az_deg_print, el_deg_print;
     
     SYSTEM_Initialize();
     
@@ -44,6 +43,8 @@ int main(void)
     motor.az.speed = 3;
     motor.alt.pwm = 2;
     motor.az.pwm = 2;
+    motor.az.overshoot = 0; // 1/10th of a degree
+    motor.alt.overshoot = 1; // very minimal overshoot
     
     diags = !DIAGS_GetValue();
     
@@ -64,13 +65,12 @@ int main(void)
     // Print the USB Option Menu
     print_usb_option_screen();
     
-    
     // The superlooop
     while (1)
     {           
         /* From notes: this is the superloop
          * read PC commands
-         * read buttons
+         * read buttons                         done
          * update rotary encoders               done
          * process commands                     mostly done
          * update motors                        done
@@ -79,30 +79,33 @@ int main(void)
          * blink status LEDs                    done
          */
         
-        // Update to previous motor directions
+        // This makes it easier to print floating point
+        az_deg_print = motor.az.degrees/10.0;
+        el_deg_print = motor.alt.degrees/10.0;
         
-        printf("\r Alt_Dir %x - Az_Dir %x - Alt_Deg %3d.%01u - Az_Deg %3d.%01u - Command   %u %d %d %d %d",
-                motor.alt.dir, motor.az.dir, motor.alt.degrees,
-                abs(motor.alt.degrees%10), motor.az.degrees, abs(motor.az.degrees%10),
-                command.command, motor.az.pulse1, motor.az.pulse2, motor.alt.pulse1, motor.alt.pulse2);
+        // Update menu
+        printf("\r  %x     %x    |   %3.1f    %3.1f |  ",motor.alt.dir, motor.az.dir, el_deg_print, az_deg_print);
+        switch(command.source)
+        {
+            case CMD_SRC_LOCAL:
+                printf("Local");
+                break;
+            case CMD_SRC_PC:
+                printf("PC   ");
+                break;
+        }
         
-        // Temporary read PC commands (this will be changed to interact with other code)
-        read_pc_commands_temp();
+        read_pc_commands_temp();    // Read menu options
         
-        // Read buttons
-        read_buttons();
-        
-        
-        
+        read_buttons();             // Read buttons
        
-        process_command(); // Update non-movement based commands
+        process_command();     // Update non-movement based commands
         
-        convert_angles(); // Convert rotary encoder pulses to angles
+        convert_angles();   // Convert rotary encoder pulses to angles
         
-        update_motors(); // Update motors and handle movement-based commands
+        update_motors();    // Update motors and handle movement-based commands
         
-        
-        refresh_lcd(); // Refresh LCD at 2Hz
+        refresh_lcd(az_deg_print, el_deg_print); // Refresh LCD at 2Hz
         
         // Blink LED at 4Hz
         if(timestamp_to_ms(timestamp_raw() - led_time) > 250) // 250 ms
@@ -111,21 +114,45 @@ int main(void)
             led_time = timestamp_raw();
         }
         
-        
         ClrWdt();
     }
 
     return 1;
 }
 
-
+////////////////////////////////////////////////////////////////////////////////
+// Startup message and logo
 void welcome_message(void)
 {
     print_output = PRINT_USB;
-    printf("\r\n\nRadio Telescope Control System\r\n");
+    printf(
+"\r\n\n\n        *    *\r\n"
+"           *                                              ***\r\n"
+"                                                         *****\r\n"
+"                                                        ******\r\n"
+"                        ***                           *** ****\r\n"
+"                        *   **************************** *****\r\n"
+"                        **** **                    ***  *****\r\n"
+"                         *** **                  **** ******\r\n"
+"                          *   ***               ***  ********\r\n"
+"                          **    ***          ****  *********\r\n"
+"                          ***    ***        ***  **********\r\n"
+"                           ***     ***    ***  ***********\r\n"
+"                          * ***         ***  ************\r\n"
+"                        **   ***      ***  *************\r\n"
+"                      **      ***   ***  ************* ****\r\n"
+"                    **         ******   ************  **  *\r\n"
+"                   **          **** ************* ** **   *\r\n"
+"                  **         **** ************  **  **    *\r\n"
+"                 ***      **** *********       ******    **\r\n"
+"                  ********* *****              **       ***\r\n"
+"                                                ***********\r\n"
+"Radio Telescope                                  **\r\n"
+"Control System                                **  *****   ******\r\n"
+"                                          ***  **   **  **   ***\r\n"
+"Zach Martin & Aaron Olsen                 *******     ****      **\r\n");
     
     lcd_setCursor(0,0);
-
     print_output = PRINT_LCD;
     printf("Radio Telescope");
     lcd_setCursor(0,1);
@@ -133,28 +160,34 @@ void welcome_message(void)
     print_output = PRINT_USB;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// Option screen for demonstration
 void print_usb_option_screen(void) // UART1 options screen
 {
     uint8_t print_op_save = print_output;   // Store current state of printf.
     print_output = PRINT_USB;
-    printf("\r\n\n\nRadio Telescope Option Menu\r\nOptions:");
-    printf( "\r\n1 - Stop Motors (CMD_STOP)"
-            "\r\n2 - Altitude Up (CMD_ALT_POS)"
-            "\r\n3 - Altitude Down (CMD_ALT_NEG)"
-            "\r\n4 - Altitude Stop Motor (CMD_ALT_STOP)"
-            "\r\n5 - Set Altitude Encoder to Zero Point (CMD_ALT_RESET)"
-            "\r\n6 - Azimuth Clockwise (CMD_AZ_POS)"
-            "\r\n7 - Azimuth Counter-Clockwise (CMD_AZ_NEG)"
-            "\r\n8 - Azimuth Stop Motor (CMD_AZ_STOP)"
-            "\r\n9 - Set Azimuth Encoder to Zero Point (CMD_AZ_RESET)"
-            "\r\n0 - Take Motors to Home (0,0) Point (CMD_HOME)"
-            "\r\nESC - Reprint the menu"
-            "\r\nEnter option: ");
+    printf("\r\n===================================================================================================="
+            "\r\nMenu Options:");
+    printf( "\r\n1 - Altitude +"
+            "\r\n2 - Altitude -"
+            "\r\n3 - Altitude Stop"
+            
+            "\r\n\n4 - Azimuth +"
+            "\r\n5 - Azimuth -"
+            "\r\n6 - Azimuth Stop"
+            
+            "\r\n\n7 - Enter degrees"
+            "\r\n\nA - Advanced Menu"
+            
+            "\r\nSpacebar - stop all motors"
+            "\r\n===================================================================================================="
+            "\r\n Direction   |     Angle    |  Command"
+            "\r\n Alt    Az   |   Alt    Az  |  Source\r\n");
     print_output = print_op_save; // Restore state of printf
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Read buttons
+// Read buttons from enclosure
 // Button 1 is left (down)   button
 // Button 2 is center (menu) button
 // Button 3 is right (up/OK) button
@@ -201,6 +234,13 @@ void read_buttons(void)
         {
             local_menu_state = 1;
         }
+        return;
+    }
+    
+    if(b1 && b3)
+    {
+        command.command = CMD_STOP;
+        return;
     }
     
     // Operate in menu
@@ -257,11 +297,28 @@ void read_buttons(void)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// Get commands from control PC & store as status
+// This is the menu for capstone demonstration
+
+// Keep track of menu
+enum
+{
+    MENU_STATE_MOVE,
+    MENU_STATE_GOTO,
+    MENU_STATE_ADVANCED
+};
+
+// Handle menu
 void read_pc_commands_temp(void)
 {
+    static uint8_t menu_state = MENU_STATE_MOVE; // Default to "Move" state
     char input = get_char_usb(); // get PC input
     
+    if(input == -1 || command.source == CMD_SRC_LOCAL)
+    {
+        return;
+    }
+    
+    // 
     // Determine if it is local control --- local control has priority and stops PC commands
     if (command.source != CMD_SRC_LOCAL)
     {
@@ -271,31 +328,28 @@ void read_pc_commands_temp(void)
         {
             case -1: // standard for no input
                 break;
-            case '1': // stop both motors
-                command.command = CMD_STOP; 
-                break;
-            case '2': // altitude move up
+            case '1': // altitude move up
                 command.command = CMD_ALT_POS;
                 break;
-            case '3': // altitude move down
+            case '2': // altitude move down
                 command.command = CMD_ALT_NEG;
                 break;
-            case '4': // altitude motor stop
+            case '3': // altitude motor stop
                 command.command = CMD_ALT_STOP;
                 break;
-            case '5': // reset altitude encoders to zero
-                command.command = CMD_ALT_RESET;
-                break;
-            case '6': // azimuth clockwise
+            case '4': // azimuth +
                 command.command = CMD_AZ_POS;
                 break;
-            case '7': // azimuth counter-clockwise
+            case '5': // azimuth -
                 command.command = CMD_AZ_NEG;
                 break;
-            case '8': // stop azimuth motor
+            case '6': // azimuth stop
                 command.command = CMD_AZ_STOP;
                 break;
-            case '9': // reset azimuth encoders to zero
+            case '7': // goto
+                _goto();
+                break;
+            case '8': // reset azimuth encoders to zero
                 command.command = CMD_AZ_RESET;
                 break;
             case '0': // take the motors to home (0,0)
@@ -362,4 +416,49 @@ void process_command(void)
         motor.az.pulse1 = 0;
         motor.az.pulse2 = 0;
     }
+}
+
+void _goto(void)
+{
+    int16_t azdeg, altdeg;
+    uint8_t num_in;
+    uint8_t tens_position = 1;
+    
+    char input;
+    command.command = CMD_STOP;
+    update_motors();
+    printf("\r\n");
+    while(input != ESC)
+    {
+        input = get_char_wait_usb();
+        num_in = ascii_to_num(input);
+        if(num_in < 10)
+        {
+            printf("%u", num_in);
+            azdeg = num_in*tens_position;
+            tens_position *= 10;
+        }
+    }
+    
+    tens_position = 1;
+    input  = -1;
+    
+    while(input != ESC)
+    {
+        input = get_char_wait_usb();
+        num_in = ascii_to_num(input);
+        if(num_in < 10)
+        {
+            printf("%u", num_in);
+            altdeg = num_in*tens_position;
+            tens_position *= 10;
+        }
+    }
+    altdeg = altdeg*10;
+    azdeg = azdeg*10;
+    
+    printf("\r\nAlt: %d AZ %d\r\n", altdeg, azdeg);
+    command.alt_deg = altdeg;
+    command.az_deg = azdeg;
+    command.command = CMD_GOTO;
 }

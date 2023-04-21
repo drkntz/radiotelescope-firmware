@@ -62,3 +62,15 @@ void delay_ms(uint16_t ms)
         ClrWdt();
     }
 }
+
+// Convert ascii character to number
+// otherwise return 0xFF
+uint8_t ascii_to_num(char c)
+{
+    if(c > 47 && c < 58) // is an ascii number
+    {
+        c = c - 48; // bit-zap it to the range 0-9
+        return (uint8_t)c;
+    }
+    return 0xFF;
+}

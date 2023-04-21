@@ -30,11 +30,14 @@
 
 // TODO: put program constants here
 #define ESC 27 // this is the escape key in ascii
+#define ENTER 10 // this is the enter key in ascii
+
 char get_char_wait_tag(void);
 char get_char_tag(void);
 char get_char_usb(void);
 char get_char_wait_usb(void);
 void delay_ms(uint16_t ms);
+uint8_t ascii_to_num(char c);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Motor states
@@ -62,6 +65,7 @@ struct _Motor
     uint16_t pwm_timestamp;
     uint8_t pwm;
     uint8_t speed;
+    uint8_t overshoot; // calibration value for overshoot
 };
 
 // Motor structure with an entry for each axis.

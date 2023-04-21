@@ -301,7 +301,7 @@ void _pulseEnable(uint8_t _data){
 // Update LCD based on motor status
 // TODO: could use scrolldisplayleft functionality and display a scrolling message
 // to give more flexibility.
-uint8_t refresh_lcd(void)
+uint8_t refresh_lcd(double az_deg, double el_deg)
 {
     static uint16_t timestamp = 0;
     
@@ -372,8 +372,7 @@ uint8_t refresh_lcd(void)
              * Since the elevation degrees shouldn't go above 90, 
              * we can more or less assume we won't print outside the LCD boundary.
              */
-            printf("AZ %3d.%1u EL %2d.%1u", motor.az.degrees/10, abs(motor.az.degrees%10),
-                    motor.alt.degrees/10, abs(motor.alt.degrees%10)); 
+            printf("AZ %5.1f EL %4.1f", az_deg, el_deg); 
             break;
             //////////////////////////////////////////////////////////////////////////
         case CMD_SRC_LOCAL:
@@ -403,8 +402,7 @@ uint8_t refresh_lcd(void)
              * Since the elevation degrees shouldn't go above 90, 
              * we can more or less assume we won't print outside the LCD boundary.
              */
-            printf("AZ %3d.%1d EL %2d.%1d", motor.az.degrees/10, abs(motor.az.degrees%10),
-                    motor.alt.degrees/10, abs(motor.alt.degrees%10)); 
+            printf("AZ %5.1f EL %4.1f", az_deg, el_deg);  
             break;
             //////////////////////////////////////////////////////////////////////////
         case CMD_SRC_DEBUG:
@@ -452,8 +450,7 @@ uint8_t refresh_lcd(void)
              * Since the elevation degrees shouldn't go above 90, 
              * we can more or less assume we won't print outside the LCD boundary.
              */
-            printf("AZ %3d.%1u EL %2d.%1u", motor.az.degrees/10, abs(motor.az.degrees%10),
-                    motor.alt.degrees/10, abs(motor.alt.degrees%10)); 
+            printf("AZ %5.1f EL %4.1f", az_deg, el_deg); 
             break;
             //////////////////////////////////////////////////////////////////////////
         default:

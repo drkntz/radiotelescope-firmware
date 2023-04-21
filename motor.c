@@ -76,8 +76,8 @@ void update_motors(void)
                 desired_move_az = MOVE_STOP;
                 break;
             case CMD_HOME:
-                command.alt_deg = 50;
-                command.az_deg = 50;
+                command.alt_deg = 0;
+                command.az_deg = 0;
                 // fall through
             case CMD_GOTO:
                 desired_move_alt = MOVE_DEGREES;
@@ -151,11 +151,11 @@ static void _motor_update(struct _Motor *mptr, uint8_t desired_move, int16_t tar
     // Handle commands to go to a certain location
     if(desired_move == MOVE_DEGREES)
     {
-        if(mptr->degrees > target_degrees)
+        if(mptr->degrees > target_degrees + mptr->overshoot)
         {
             desired_move = MOVE_NEG;
         }
-        else if(mptr->degrees < target_degrees)
+        else if(mptr->degrees < target_degrees - mptr->overshoot)
         {
             desired_move = MOVE_POS;
         }

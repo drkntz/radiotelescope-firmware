@@ -82,6 +82,6 @@ void lcd_printf_write(char data); // this is used for printf writing to LCD disp
 
 ////////////////////////////////////////////////////////////////////////////////
 // Function specific to the radiotelescope
-uint8_t refresh_lcd(void);
+uint8_t refresh_lcd(double, double);
 
 #endif // LiquidCrystal_PIC_h
