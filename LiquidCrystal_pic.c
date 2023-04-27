@@ -372,7 +372,7 @@ uint8_t refresh_lcd(double az_deg, double el_deg)
              * Since the elevation degrees shouldn't go above 90, 
              * we can more or less assume we won't print outside the LCD boundary.
              */
-            printf("AZ %5.1f EL %4.1f", az_deg, el_deg); 
+            printf("AZ%6.1f EL%5.1f", az_deg, el_deg); 
             break;
             //////////////////////////////////////////////////////////////////////////
         case CMD_SRC_LOCAL:
@@ -402,7 +402,7 @@ uint8_t refresh_lcd(double az_deg, double el_deg)
              * Since the elevation degrees shouldn't go above 90, 
              * we can more or less assume we won't print outside the LCD boundary.
              */
-            printf("AZ %5.1f EL %4.1f", az_deg, el_deg);  
+            printf("AZ%6.1f EL%5.1f", az_deg, el_deg); 
             break;
             //////////////////////////////////////////////////////////////////////////
         case CMD_SRC_DEBUG:
@@ -450,7 +450,7 @@ uint8_t refresh_lcd(double az_deg, double el_deg)
              * Since the elevation degrees shouldn't go above 90, 
              * we can more or less assume we won't print outside the LCD boundary.
              */
-            printf("AZ %5.1f EL %4.1f", az_deg, el_deg); 
+            printf("AZ%6.1f EL%5.1f", az_deg, el_deg); 
             break;
             //////////////////////////////////////////////////////////////////////////
         default:

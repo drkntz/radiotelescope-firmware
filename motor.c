@@ -76,8 +76,8 @@ void update_motors(void)
                 desired_move_az = MOVE_STOP;
                 break;
             case CMD_HOME:
-                command.alt_deg = -300;
-                command.az_deg = -800;
+                command.alt_deg = 0;
+                command.az_deg = 0;
                 // fall through
             case CMD_GOTO:
                 desired_move_alt = MOVE_DEGREES;
@@ -176,8 +176,13 @@ static void _motor_update(struct _Motor *mptr, uint8_t desired_move, int16_t tar
     // Handle commands to move negative direction
     else if(desired_move == MOVE_NEG)
     {
+        if(mptr->degrees <= mptr->min_degrees)
+        {
+            mptr->dir = MOTOR_STOP; // can't go negative!
+        }
+        
         // Already moving negative, ignore
-        if(mptr->dir == MOTOR_NEG )  { }
+        else if(mptr->dir == MOTOR_NEG )  { }
 
         /* We were going in positive direction, so we have to stop, 
          * wait, and then change direction. */
@@ -204,8 +209,13 @@ static void _motor_update(struct _Motor *mptr, uint8_t desired_move, int16_t tar
     // Handle commands to move positive direction
     else if(desired_move == MOVE_POS)
     {
+        if(mptr->degrees >= mptr->max_degrees)
+        {
+            mptr->dir = MOTOR_STOP; // can't go negative!
+        }
+        
         // already moving positive, ignore
-        if(mptr->dir == MOTOR_POS) { }
+        else if(mptr->dir == MOTOR_POS) { }
 
         /* We were going in negative direction, so we have to stop, 
          * wait, and then change direction. */
@@ -222,5 +232,4 @@ static void _motor_update(struct _Motor *mptr, uint8_t desired_move, int16_t tar
             mptr->dir = MOTOR_POS;
         }
     }
-    
 }

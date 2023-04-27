@@ -27,6 +27,10 @@
 #include "mcc_generated_files/tmr1.h"
 #include "motor.h"
 
+////////////////////////////////////////////////////////////////////////////////
+// Disable some things for capstone presentation TODO: remove
+#define PRESENTATION_MODE   // comment or remove this for regular mode
+
 
 // TODO: put program constants here
 #define ESC 27 // this is the escape key in ascii
@@ -57,6 +61,8 @@ typedef enum
 struct _Motor
 {
     int16_t degrees;   // This is converted from pulses. In tenths of a degree.
+    int16_t max_degrees;    // these are the limits for motion
+    int16_t min_degrees;
     motor_dir_t dir;    // MOTOR_POS, MOTOR_NEG, or MOTOR_STOP
     uint16_t current;   // TODO: how are we formatting current?
     int32_t pulse1;    // Encoder 1 transition count.

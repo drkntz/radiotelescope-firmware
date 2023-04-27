@@ -23,6 +23,7 @@ void print_usb_option_screen(void);
 void update_pc_menu(double, double);
 void read_buttons(void);
 void _goto(void); // get input from user and send goto command
+uint8_t _advanced_menu(void);
 
 
 // Variable declarations for read_buttons()
@@ -45,6 +46,19 @@ int main(void)
     motor.az.pwm = 2;
     motor.az.overshoot = 0; // 1/10th of a degree
     motor.alt.overshoot = 1; // very minimal overshoot
+    
+#ifdef PRESENTATION_MODE
+    motor.alt.max_degrees = 610; // 61 degrees for presentation
+    motor.az.max_degrees = 1370; // 137 degrees for presentation
+    motor.alt.min_degrees = 0; 
+    motor.az.min_degrees = -200; // -20 degrees for presentation
+#else
+    motor.alt.max_degrees = 950; // 95 degrees
+    motor.alt.min_degrees = -10; // -1 degree
+    motor.az.max_degrees = 3600;
+    motor.az.min_degrees = -10; // -1 degree
+#endif
+    
     
     diags = !DIAGS_GetValue();
     
@@ -265,6 +279,8 @@ void read_buttons(void)
             }
             break;
         case 3: // Az - Zero - El ///// This menu will zero az if left button clicked or zero alt(el) if right button clicked
+#ifndef PRESENTATION_MODE // will not work in presentations for capstone TODO
+            
             if (b1) // zero the azimuth
             {
                 command.command = CMD_AZ_RESET;
@@ -273,6 +289,7 @@ void read_buttons(void)
             {
                 command.command = CMD_ALT_RESET;
             }
+#endif 
             break;
         case 4: // Quit
             if (b3)
@@ -351,7 +368,8 @@ void update_pc_menu(double az_deg_print, double el_deg_print)
                         update_motors();
                         menu_state = MENU_STATE_GOTO;
                         break;
-                    case 'A': // take the motors to home (0,0)
+                    case 'a': // take the motors to home (0,0)
+                    case 'A':
                         menu_state = MENU_STATE_ADVANCED;
                         break;
                     case ESC:
@@ -367,7 +385,7 @@ void update_pc_menu(double az_deg_print, double el_deg_print)
             _goto();
             break;
         case MENU_STATE_ADVANCED:
-            command.command = CMD_HOME;
+            menu_state = _advanced_menu();
             break;
     }
     
@@ -486,4 +504,59 @@ void _goto(void)
     }
     
     printf("\rGOTO:  ALT: %3.1f   AZ: %3.1f", altdeg/10.0, azdeg/10.0);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Advanced menu, 
+uint8_t _advanced_menu(void)
+{
+    static uint8_t menu_state = 0;
+    uint8_t main_menu_state = MENU_STATE_ADVANCED;
+    
+    char input;
+    
+    switch(menu_state)
+    {
+        case 0:
+            printf("\r\n1 - Go home"
+                    "\r\n2 - GOTO ALT = 45, AZ = 45"
+                    "\r\n3 - Reset encoders to 0,0"
+                    "\r\nESC - return to previous menu\r\n");
+            menu_state ++;
+            break;
+        case 1:
+            input = UART1_Read();
+    }
+    
+    switch(input)
+    {
+        case -1:
+            break;
+        case ESC:
+            main_menu_state = MENU_STATE_MOVE;
+            break;
+        case '1':
+            command.command = CMD_HOME;
+            printf("\r\nGo home");
+            main_menu_state = MENU_STATE_MOVE;
+            break;
+        case '2': // goto 45, 45
+            command.alt_deg = 450;
+            command.az_deg = 450; 
+            command.command = CMD_GOTO;
+            printf("\r\nGoto 45, 45");
+            main_menu_state = MENU_STATE_MOVE;
+            break;
+        case '3': // reset
+            command.command = CMD_ALT_RESET;
+            command.command = CMD_AZ_RESET;
+            main_menu_state = MENU_STATE_MOVE;
+            break;
+    }
+    
+    if(main_menu_state == MENU_STATE_MOVE)
+    {
+        menu_state = 0;
+    }
+    return main_menu_state;
 }
