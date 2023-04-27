@@ -1,64 +1,10 @@
-
-/**
-  I2C1 Generated Driver File
-
-  @Company
-    Microchip Technology Inc.
-
-  @File Name
-    i2c1.c
-
-  @Summary
-    This is the generated header file for the i2c1 driver using PIC24 / dsPIC33 / PIC32MM MCUs
-
-  @Description
-    This header file provides APIs for driver for i2c1.
-    Generation Information :
-        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.171.1
-        Device            :  PIC24FV32KA304
-
-    The generated drivers are tested against the following:
-        Compiler          :  XC16 v1.70
-        MPLAB             :  MPLAB X v5.50
-*/
-
-/*
-    (c) 2020 Microchip Technology Inc. and its subsidiaries. You may use this
-    software and any derivatives exclusively with Microchip products.
-
-    THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
-    EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED
-    WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A
-    PARTICULAR PURPOSE, OR ITS INTERACTION WITH MICROCHIP PRODUCTS, COMBINATION
-    WITH ANY OTHER PRODUCTS, OR USE IN ANY APPLICATION.
-
-    IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
-    INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND
-    WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS
-    BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE
-    FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN
-    ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY,
-    THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
-
-    MICROCHIP PROVIDES THIS SOFTWARE CONDITIONALLY UPON YOUR ACCEPTANCE OF THESE
-    TERMS.
+/*==============================================================================
+ * File: i2c1.c
+ * MCC-generated i2c driver
+ * Radiotelescope project
 */
 
 #include "i2c1.h"
-
-/**
- Section: Data Types
-*/
-
-/**
-  I2C Driver Queue Status Type
-
-  @Summary
-    Defines the type used for the transaction queue status.
-
-  @Description
-    This defines type used to keep track of the queue status.
- */
 
 typedef union
 {
@@ -71,17 +17,6 @@ typedef union
     uint8_t status;
 } I2C_TR_QUEUE_STATUS;
 
-/**
-  I2C Driver Queue Entry Type
-
-  @Summary
-    Defines the object used for an entry in the i2c queue items.
-
-  @Description
-    This defines the object in the i2c queue. Each entry is a composed
-    of a list of TRBs, the number of the TRBs and the status of the
-    currently processed TRB.
- */
 typedef struct
 {
     uint8_t                         count;          // a count of trb's in the trb list
@@ -90,17 +25,6 @@ typedef struct
                                                     // if all trb's are sent successfully,
                                                     // then this is I2C1_MESSAGE_COMPLETE
 } I2C_TR_QUEUE_ENTRY;
-
-/**
-  I2C Master Driver Object Type
-
-  @Summary
-    Defines the object that manages the i2c master.
-
-  @Description
-    This defines the object that manages the sending and receiving of
-    i2c master transactions.
-  */
 
 typedef struct
 {
@@ -114,17 +38,6 @@ typedef struct
 
 
 } I2C_OBJECT ;
-
-/**
-  I2C Master Driver State Enumeration
-
-  @Summary
-    Defines the different states of the i2c master.
-
-  @Description
-    This defines the different states that the i2c master
-    used to process transactions on the i2c bus.
-*/
 
 typedef enum
 {
@@ -142,13 +55,6 @@ typedef enum
     S_MASTER_10BIT_RESTART,
     
 } I2C_MASTER_STATES;
-
-/**
- Section: Macro Definitions
-*/
-
-/* defined for I2C1 */
-
 
 #ifndef I2C1_CONFIG_TR_QUEUE_LENGTH
         #define I2C1_CONFIG_TR_QUEUE_LENGTH 1
@@ -169,16 +75,8 @@ typedef enum
 #define I2C1_ACKNOWLEDGE_ENABLE_BIT             I2C1CONbits.ACKEN 	// I2C ACK start control bit.
 #define I2C1_ACKNOWLEDGE_DATA_BIT               I2C1CONbits.ACKDT	// I2C ACK data control bit.
 
-/**
- Section: Local Functions
-*/
-
 static void I2C1_FunctionComplete(void);
 static void I2C1_Stop(I2C1_MESSAGE_STATUS completion_code);
-
-/**
- Section: Local Variables
-*/
 
 static I2C_TR_QUEUE_ENTRY            i2c1_tr_queue[I2C1_CONFIG_TR_QUEUE_LENGTH];
 static I2C_OBJECT                    i2c1_object;
@@ -187,11 +85,6 @@ static uint8_t                       i2c1_trb_count;
 
 static I2C1_TRANSACTION_REQUEST_BLOCK *p_i2c1_trb_current;
 static I2C_TR_QUEUE_ENTRY            *p_i2c1_current = NULL;
-
-
-/**
-  Section: Driver Interface
-*/
 
 void I2C1_Initialize(void)
 {
@@ -713,7 +606,3 @@ bool I2C1_MasterQueueIsFull(void)
 {
     return((bool)i2c1_object.trStatus.s.full);
 }
-
-/**
- End of File
-*/

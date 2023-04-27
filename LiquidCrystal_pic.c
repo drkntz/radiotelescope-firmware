@@ -1,8 +1,10 @@
-/* Adapted from DFRobot Arduino code
- * Drive 16x2 alphanumeric i2c display with PIC24
- *
- * Zach Martin, 4/8/23
- */
+/*==============================================================================
+ * File: LiquidCrystal_pic.c
+ * LCD driver for radiotelescope project. 
+ * Rewritten in C for PIC24. Adapted from C++/Arduino library.
+ * Author: Zach Martin
+ * Date: 4/8/2023
+*/
 
 #include "LiquidCrystal_pic.h"
 #include "mcc_generated_files/i2c1.h"

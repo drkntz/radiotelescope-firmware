@@ -1,4 +1,5 @@
-/* common.c
+/*==============================================================================
+ * File: common.c
  * Common libraries and constants for radio-telescope control system project
  * Authors: Zach Martin & Aaron Olsen
  * Date: 3/22/2023

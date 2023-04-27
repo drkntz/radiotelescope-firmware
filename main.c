@@ -1,10 +1,9 @@
-/* main.c
+/*==============================================================================
+ * File: main.c
  * Main file for radio-telescope control system project
  * Authors: Zach Martin & Aaron Olsen
  * Date: 3/9/2023
  * 
- * TODO: 
- *  * init diags via some kind of passcode ('q' 3 times over usb?)
 */
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +96,7 @@ int main(void)
         // This makes it easier to print floating point
         az_deg_print = motor.az.degrees/10.0;
         el_deg_print = motor.alt.degrees/10.0;
-        update_pc_menu(az_deg_print, el_deg_print);    // Get commands and print menu
+        update_pc_menu(az_deg_print, el_deg_print);//Get commands and print menu
         
         read_buttons();      // Read buttons
        
@@ -168,7 +167,8 @@ void print_usb_option_screen(void) // UART1 options screen
 {
     uint8_t print_op_save = print_output;   // Store current state of printf.
     print_output = PRINT_USB;
-    printf("\r\n===================================================================================================="
+    printf("\r\n============================================================="
+			"======================================="
             "\r\nMenu Options:");
     printf( "\r\n1 - Altitude +"
             "\r\n2 - Altitude -"
@@ -182,7 +182,8 @@ void print_usb_option_screen(void) // UART1 options screen
             "\r\n\nA - Advanced Menu"
             
             "\r\nSpacebar - stop all motors"
-            "\r\n===================================================================================================="
+            "\r\n============================================================="
+			"======================================="
             "\r\n Direction   |     Angle    |  Command"
             "\r\n Alt    Az   |   Alt    Az  |  Source\r\n");
     print_output = print_op_save; // Restore state of printf
@@ -210,11 +211,12 @@ void read_buttons(void)
     
     // Debounce buttons
     // button 2 happens only on positive edge
+	// Button 2 always resets the command to "STOP"
     if(timestamp_to_ms(raw_time - b2_time) > BUTTON_DEBOUNCE && BUTTON2_GetValue() && !b2_prev)
     {
         b2 = true;
         b2_time = raw_time;
-        command.command = CMD_STOP; // This fixes the bug where motor command is retained after switching to local control override
+        command.command = CMD_STOP;
     }
     b2_prev = BUTTON2_GetValue();
     
@@ -222,7 +224,7 @@ void read_buttons(void)
     // if any button is pressed, change source to local control
     if ( b2 && local_menu_state == 0)
     {
-        command.source = CMD_SRC_LOCAL; // set to local control source for commands
+        command.source = CMD_SRC_LOCAL; // Set to local control source for commands
         local_menu_state = 1;
         return;
     }

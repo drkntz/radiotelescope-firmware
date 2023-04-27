@@ -1,36 +1,20 @@
-/* file: motor.c
+/*==============================================================================
+ * File: motor.c
  * Motor control file for radio-telescope project
  * Authors: Zach Martin & Aaron Olsen
  * Date: 4/20/2023
- * 
  * TODO:
- *  generic motor update function for both motors               DONE
-               (can I pass a struct maybe?)
- *  interface with just one motor_update function in main       DONE
- *  handle PWM-ing so we can go to a place wihtout overshoot
- *  for some reason motor controls are also occuring in the 
-               command processing function. don't do that.
- *  add motor max and min in struct so we can prevent 
-               breaking the antenna
- * 
+	* PWM control
 */
 
 #include "motor.h"
 
-// Motor movement types. Manual +/- or degrees
+// Motor movement types. Manual +/- or target degrees
 enum {
   MOVE_NEG,
   MOVE_POS,
   MOVE_STOP,
   MOVE_DEGREES
-};
-
-// to keep track of PWM cycle high or low
-enum
-{
-    PWM_PWL = 0,
-    PWM_PWH,
-    PWM_NONE
 };
 
 // Public function for updating in main loop
@@ -84,7 +68,7 @@ void update_motors(void)
                 desired_move_az = MOVE_DEGREES;
                 break;
                 
-            default: // TODO: this may create bugs!?
+            default:
                 // do nothing, send old desired move command again.
                 break;
         }
@@ -140,14 +124,11 @@ void update_motors(void)
 // Pass by reference. &motor.alt for example
 // access members by dereferencing, eg mptr->degrees
 // Move_type can be   MOVE_NEG,  MOVE_POS,  MOVE_STOP, and  MOVE_DEGREES
+
 #define DIR_CHANGE_DELAY 600 // #ms until motor is allowed to switch directions
-#define PWM_HIGH_TIME 50        // $ms high
-#define PWM_LOW_TIME 100        // 33% pwm
 
 static void _motor_update(struct _Motor *mptr, uint8_t desired_move, int16_t target_degrees) 
 {
-
-    
     // Handle commands to go to a certain location
     if(desired_move == MOVE_DEGREES)
     {
@@ -170,7 +151,6 @@ static void _motor_update(struct _Motor *mptr, uint8_t desired_move, int16_t tar
     {
         mptr->dir = MOTOR_STOP;                 // OK, we can stop
         mptr->off_timestamp = timestamp_raw(); // Make sure we allow everything to settle so we dont accidentally break something by doing go + -> stop -> go -
-        //return; // TODO: return early so we get quickest response
     }
     
     // Handle commands to move negative direction

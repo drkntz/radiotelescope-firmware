@@ -1,9 +1,8 @@
-/* diagnostic.c
+/*==============================================================================
+ * File: diagnostic.c
  * Test functions for radio-telescope board
  * Authors: Zach Martin & Aaron Olsen
  * Date: 3/22/2023
- * 
- * 
 */
 
 #include "diagnostic.h"

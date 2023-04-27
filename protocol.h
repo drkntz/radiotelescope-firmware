@@ -1,8 +1,8 @@
-/* File: protocol.h
+/*==============================================================================
+ * File: protocol.h
  * Handle communication protocol with main PC over USB-UART bridge.
  * Authors: Zach Martin & Aaron Olsen
  * Date: 4/16/23
- * 
 */
 
 #ifndef PROTOCOL_H

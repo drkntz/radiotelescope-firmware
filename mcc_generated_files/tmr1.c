@@ -1,75 +1,11 @@
-
-/**
-  TMR1 Generated Driver API Source File 
-
-  @Company
-    Microchip Technology Inc.
-
-  @File Name
-    tmr1.c
-
-  @Summary
-    This is the generated source file for the TMR1 driver using PIC24 / dsPIC33 / PIC32MM MCUs
-
-  @Description
-    This source file provides APIs for driver for TMR1. 
-    Generation Information : 
-        Product Revision  :  PIC24 / dsPIC33 / PIC32MM MCUs - 1.171.1
-        Device            :  PIC24FV32KA304
-    The generated drivers are tested against the following:
-        Compiler          :  XC16 v1.70
-        MPLAB             :  MPLAB X v5.50
-*/
-
-/*
-    (c) 2020 Microchip Technology Inc. and its subsidiaries. You may use this
-    software and any derivatives exclusively with Microchip products.
-
-    THIS SOFTWARE IS SUPPLIED BY MICROCHIP "AS IS". NO WARRANTIES, WHETHER
-    EXPRESS, IMPLIED OR STATUTORY, APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED
-    WARRANTIES OF NON-INFRINGEMENT, MERCHANTABILITY, AND FITNESS FOR A
-    PARTICULAR PURPOSE, OR ITS INTERACTION WITH MICROCHIP PRODUCTS, COMBINATION
-    WITH ANY OTHER PRODUCTS, OR USE IN ANY APPLICATION.
-
-    IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
-    INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND
-    WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP HAS
-    BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO THE
-    FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL CLAIMS IN
-    ANY WAY RELATED TO THIS SOFTWARE WILL NOT EXCEED THE AMOUNT OF FEES, IF ANY,
-    THAT YOU HAVE PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
-
-    MICROCHIP PROVIDES THIS SOFTWARE CONDITIONALLY UPON YOUR ACCEPTANCE OF THESE
-    TERMS.
-*/
-
-/**
-  Section: Included Files
+/*==============================================================================
+ * File: tmr1.c
+ * MCC-generated (and human modified) timer interface for TMR1 peripheral.
+ * Radiotelescope project
 */
 
 #include <stdio.h>
 #include "tmr1.h"
-
-/**
- Section: File specific functions
-*/
-
-/**
-  Section: Data Type Definitions
-*/
-
-/** TMR Driver Hardware Instance Object
-
-  @Summary
-    Defines the object required for the maintenance of the hardware instance.
-
-  @Description
-    This defines the object required for the maintenance of the hardware
-    instance. This object exists once per hardware instance of the peripheral.
-
-  Remarks:
-    None.
-*/
 
 typedef struct _TMR_OBJ_STRUCT
 {
@@ -185,7 +121,6 @@ void TMR1_SoftwareCounterClear(void)
 /* Convert timer1 ticks to ms
  * This method has a max time of 65,536 counts. 
  * Period is 1/3.875k = 258.06us. Max time ~= 16.9 seconds.
- * TODO: we could come up with a method for longer time?
  */
 uint16_t timestamp_to_ms(uint16_t timestamp)
 {

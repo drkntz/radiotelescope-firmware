@@ -1,7 +1,8 @@
-/* common.h
+/*==============================================================================
+ * File: common.h
  * Common libraries and constants for radio-telescope control system project
  * Authors: Zach Martin & Aaron Olsen
- * Date: 3/9/2023
+ * Date: 3/22/2023
 */
 
 #ifndef COMMON_H
@@ -132,4 +133,3 @@ extern uint8_t local_menu_state;
 #include "protocol.h"
 
 #endif	// COMMON_H
-

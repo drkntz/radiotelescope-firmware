@@ -1,8 +1,9 @@
-/* File: protocol.c
+/*==============================================================================
+ * File: protocol.c
  * Handle communication protocol with main PC over USB-UART bridge.
  * Authors: Zach Martin & Aaron Olsen
  * Date: 4/16/23
- * 
+	* TODO: handle returning status
 */
 
 #include "protocol.h"
@@ -89,7 +90,6 @@ commands_t check_pc_commands(void)
     }    
     return CMD_NONE; // no data was rx'd
 }
-
 
 // Check if the byte inputs are commands per Mark P's command structure.
 // Return CMD type (EG CMD_GOTO)
