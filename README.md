@@ -7,4 +7,4 @@ This project runs an embedded microcontroller PCB which controls the alt-az moto
 
 There is a seperate github repository for the PCB and one for the software which runs on the main computer. 
 
-Those repositories used to be linked in this README but are removed for now.
+Those repositories used to be linked in this README but the links are removed for now to observe IEEE capstone competition rules.
