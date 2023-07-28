@@ -1,10 +1,13 @@
-# radiotelescope-firmware
-Firmware for Radio Telescope Project. 
+# News
+First place (tie), 2023 IEEE Susquehanna Section Capstone Competition. Project paper here: https://r2.ieee.org/susquehanna/wp-content/uploads/sites/24/2023/07/IEEE_RadioTelescopeControlSystem_Report.pdf
+ 
+# About
+Firmware for Penn State Harrisburg Radio Telescope Project. 
 
 Created by Zach Martin and Aaron Olsen for Spring 2023 Capstone design.
 
 This project runs an embedded microcontroller PCB which controls the alt-az motor system. It communicates over USB with a PC.
 
-There is a seperate github repository for the PCB and one for the software which runs on the main computer. 
+Hardware repository: https://github.com/drkntz/radiotelescope-PCB
 
-Those repositories used to be linked in this README but the links are removed for now to observe IEEE capstone competition rules.
+Main program software: https://github.com/RidhaChowdhury/MiniRadioTelescope
